@@ -95,6 +95,8 @@ func handleConn(connIn *net.TCPConn) {
     
     addrServer, errParse := net.ResolveTCPAddr("tcp", "localhost:9999")
     //addrServer, errParse := net.ResolveTCPAddr("tcp", "onet.pl:80")
+    //addrServer, errParse := net.ResolveTCPAddr("tcp", "pl.wikipedia.org:80")
+    
     
     if errParse != nil {
         panic(errParse)
@@ -133,7 +135,7 @@ func handleConn(connIn *net.TCPConn) {
     
     fmt.Println("czytam", current)
     
-    <- isClose
+    <- setClose
     
     fmt.Println("koniec", current)
     
@@ -146,7 +148,7 @@ func handleConn(connIn *net.TCPConn) {
 //http://golang.org/src/io/io.go?s=12247:12307#L340
 //http://www.badgerr.co.uk/2011/06/20/golang-away-tcp-chat-server/
 
-
+/*
 func Copy(dst Writer, src Reader) (int64, error) {
     
     written := int64(0)
@@ -186,6 +188,7 @@ func Copy(dst Writer, src Reader) (int64, error) {
     
     return written, err
 }
+*/
 
 /*
 
