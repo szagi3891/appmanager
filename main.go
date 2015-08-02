@@ -34,7 +34,7 @@ func main(){
     interruptNotify()
     
     
-    addProxy, err1 := net.ResolveTCPAddr("tcp", "localhost:8888")
+    addProxy, err1 := net.ResolveTCPAddr("tcp", "127.0.0.1:8888")
     
     if err1 != nil {
         panic(err1)
@@ -50,7 +50,7 @@ func main(){
 		panic(err)
 	}
     
-    serverBackend := serverBackend.New("localhost:9999")
+    serverBackend := serverBackend.New("127.0.0.1:9999")
     
 	for {
         
