@@ -7,6 +7,7 @@ import (
     "io"
     "fmt"
     "sync"
+    "time"
 )
 
 
@@ -25,7 +26,9 @@ func interruptNotify() {
         }
     }()
 }
+
 //var once sync.Once
+
 var mutex sync.Mutex
 var count int
 
@@ -43,6 +46,83 @@ func sub() {
     fmt.Println("zamykam        : ", count)
 	mutex.Unlock()
 }
+
+
+
+type connectionFlag struct {
+    
+    mutex sync.Mutex
+    isClose chan bool
+    
+    ord1Flag bool
+    ord1Size int64
+    ord1Err1 error
+    ord1Err2 error
+    
+    ord2Flag bool
+    ord2Size int64
+    ord2Err1 error
+    ord2Err2 error
+}
+
+func newConnectionFlag() *connectionFlag {
+    
+    return &connectionFlag{
+        isClose : make(chan bool),
+    }
+}
+
+func (self *connectionFlag) isDone() bool {
+    
+    self.mutex.Lock()
+    defer self.mutex.Unlock()
+    
+    return self.ord1Flag == true && self.ord2Flag == true
+}
+    
+func (self *connectionFlag) Set1(size int64, err1, err2 error) {
+    
+    self.mutex.Lock()
+    defer self.mutex.Unlock()
+    
+    self.ord1Flag = true
+    self.ord1Size = size
+    self.ord1Err1 = err1
+    self.ord1Err2 = err2
+    
+    if self.ord1Flag == true && self.ord2Flag == true {
+        close(self.isClose)
+    }
+}
+
+func (self *connectionFlag) Set2(size int64, err1, err2 error) {
+    
+    self.mutex.Lock()
+    defer self.mutex.Unlock()
+    
+    self.ord2Flag = true
+    self.ord2Size = size
+    self.ord2Err1 = err1
+    self.ord2Err2 = err2
+    
+    if self.ord1Flag == true && self.ord2Flag == true {
+        close(self.isClose)
+    }
+}
+
+func (self *connectionFlag) Wait() {
+    
+    <- self.isClose
+    
+    fmt.Println("1: size :", self.ord1Size)
+    fmt.Println("1: err1 :", self.ord1Err1)
+    fmt.Println("1: err2 :", self.ord1Err2)
+    fmt.Println("2: size :", self.ord2Size)
+    fmt.Println("2: err1 :", self.ord2Err1)
+    fmt.Println("2: err2 :", self.ord2Err2)
+    //<- isClose
+}
+
 
 func main(){
     
@@ -91,7 +171,8 @@ func handleConn(connIn *net.TCPConn) {
     
     defer connIn.Close()
     
-    fmt.Println("nawiązano nowe połączenie")
+    
+    //fmt.Println("nawiązano nowe połączenie")
     
     addrServer, errParse := net.ResolveTCPAddr("tcp", "localhost:9999")
     //addrServer, errParse := net.ResolveTCPAddr("tcp", "onet.pl:80")
@@ -110,37 +191,24 @@ func handleConn(connIn *net.TCPConn) {
 	defer connDest.Close()
     
     
+    connFlag := newConnectionFlag()
     
-    setClose := make(chan bool)
     
     go func() {
         
-        io.Copy(connIn, connDest)
-        
+        connFlag.Set1(Copy(connFlag, connIn, connDest))
         fmt.Println("koniec kopiowania 1 ...", current)
-        //close(isClose)
-        
-        setClose <- false
     }()
     
     go func() {
         
-        io.Copy(connDest, connIn)
-        
+        connFlag.Set2(Copy(connFlag, connDest, connIn))
         fmt.Println("koniec kopiowania 2 ...", current)
-        //close(isClose)
-        
-        setClose <- false
     }()
     
-    fmt.Println("czytam", current)
-    
-    <- setClose
+    connFlag.Wait()
     
     fmt.Println("koniec", current)
-    
-    //<- isClose
-    
 }
 
 
@@ -148,58 +216,44 @@ func handleConn(connIn *net.TCPConn) {
 //http://golang.org/src/io/io.go?s=12247:12307#L340
 //http://www.badgerr.co.uk/2011/06/20/golang-away-tcp-chat-server/
 
-/*
-func Copy(dst Writer, src Reader) (int64, error) {
+
+func Copy(flag *connectionFlag, src *net.TCPConn, dst *net.TCPConn) (int64, error, error) {
     
     written := int64(0)
+    buf     := make([]byte, 32*1024)
     
-    buf := make([]byte, 32*1024)
+    src.SetReadDeadline(time.Now().Add(time.Second))
+    dst.SetWriteDeadline(time.Now().Add(time.Second))
     
     for {
         
-        nr, er := src.Read(buf)
+        if flag.isDone() {
+            return written, nil, nil
+        }
+        
+        nr, err1 := src.Read(buf)
         
         if nr > 0 {
             
-            nw, ew := dst.Write(buf[0:nr])
+            nw, err2 := dst.Write(buf[0:nr])
             
             if nw > 0 {
                 written += int64(nw)
             }
             
-            if ew != nil {
-                err = ew
-                break
+            if err1 != nil || err2 != nil {
+                return written, err1, err2
             }
             
             if nr != nw {
-                return written, ErrShortWrite
+                return written, err1, io.ErrShortWrite
             }
         }
         
-        if er == EOF {
-            break
-        }
-        
-        if er != nil {
-            return written, er
+        if err1 != nil {
+            return written, err1, nil
         }
     }
-    
-    return written, err
 }
-*/
 
-/*
-
-    c.SetReadDeadline(time.Now())
-if _, err := c.Read(one); err == io.EOF {
-  l.Printf(logger.LevelDebug, "%s detected closed LAN connection", id)
-  c.Close()
-  c = nil
-} else {
-  var zero time.Time
-  c.SetReadDeadline(time.Time{})
-}
-*/
 
