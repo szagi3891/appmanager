@@ -51,15 +51,12 @@ func sub() {
 
 type connectionFlag struct {
     
-    mutex sync.Mutex
-    isClose chan bool
-    
-    ord1Flag bool
+    isClose1 chan bool
     ord1Size int64
     ord1Err1 error
     ord1Err2 error
     
-    ord2Flag bool
+    isClose2 chan bool
     ord2Size int64
     ord2Err1 error
     ord2Err2 error
@@ -68,51 +65,52 @@ type connectionFlag struct {
 func newConnectionFlag() *connectionFlag {
     
     return &connectionFlag{
-        isClose : make(chan bool),
+        isClose1 : make(chan bool),
+        isClose2 : make(chan bool),
     }
 }
 
 func (self *connectionFlag) isDone() bool {
     
-    self.mutex.Lock()
-    defer self.mutex.Unlock()
+    select {
+        case <- self.isClose1 : {
+            return true
+        }
+        default : {
+        }
+    }
     
-    return self.ord1Flag == true && self.ord2Flag == true
+    select {
+        case <- self.isClose2 : {
+            return true
+        }
+        default : {
+        }
+    }
+    
+    return false
 }
     
 func (self *connectionFlag) Set1(size int64, err1, err2 error) {
     
-    self.mutex.Lock()
-    defer self.mutex.Unlock()
-    
-    self.ord1Flag = true
     self.ord1Size = size
     self.ord1Err1 = err1
     self.ord1Err2 = err2
-    
-    if self.ord1Flag == true && self.ord2Flag == true {
-        close(self.isClose)
-    }
+    close(self.isClose1)
 }
 
 func (self *connectionFlag) Set2(size int64, err1, err2 error) {
     
-    self.mutex.Lock()
-    defer self.mutex.Unlock()
-    
-    self.ord2Flag = true
     self.ord2Size = size
     self.ord2Err1 = err1
     self.ord2Err2 = err2
-    
-    if self.ord1Flag == true && self.ord2Flag == true {
-        close(self.isClose)
-    }
+    close(self.isClose2)
 }
 
 func (self *connectionFlag) Wait() {
     
-    <- self.isClose
+    <- self.isClose1
+    <- self.isClose2
     
     fmt.Println("1: size :", self.ord1Size)
     fmt.Println("1: err1 :", self.ord1Err1)
@@ -120,7 +118,6 @@ func (self *connectionFlag) Wait() {
     fmt.Println("2: size :", self.ord2Size)
     fmt.Println("2: err1 :", self.ord2Err1)
     fmt.Println("2: err2 :", self.ord2Err2)
-    //<- isClose
 }
 
 
@@ -132,6 +129,7 @@ func main(){
         //81 -> 9999
     
     addProxy, err1 := net.ResolveTCPAddr("tcp", "localhost:8888")
+    //addProxy, err1 := net.ResolveTCPAddr("tcp", "localhost:80")
     
     if err1 != nil {
         panic(err1)
@@ -172,10 +170,10 @@ func handleConn(connIn *net.TCPConn) {
     defer connIn.Close()
     
     
-    //fmt.Println("nawiązano nowe połączenie")
+    fmt.Println("nawiązano nowe połączenie")
     
     addrServer, errParse := net.ResolveTCPAddr("tcp", "localhost:9999")
-    //addrServer, errParse := net.ResolveTCPAddr("tcp", "onet.pl:80")
+    //addrServer, errParse := net.ResolveTCPAddr("tcp", "213.180.141.140:80")     //onet
     //addrServer, errParse := net.ResolveTCPAddr("tcp", "pl.wikipedia.org:80")
     
     
@@ -184,6 +182,7 @@ func handleConn(connIn *net.TCPConn) {
     }
     
 	connDest, err := net.DialTCP("tcp", nil, addrServer)
+    
 	if err != nil {
 		panic(err)
 	}
@@ -196,13 +195,13 @@ func handleConn(connIn *net.TCPConn) {
     
     go func() {
         
-        connFlag.Set1(Copy(connFlag, connIn, connDest))
+        connFlag.Set1(Copy(connFlag, connIn, connDest, current))
         fmt.Println("koniec kopiowania 1 ...", current)
     }()
     
     go func() {
         
-        connFlag.Set2(Copy(connFlag, connDest, connIn))
+        connFlag.Set2(Copy(connFlag, connDest, connIn, current))
         fmt.Println("koniec kopiowania 2 ...", current)
     }()
     
@@ -217,13 +216,12 @@ func handleConn(connIn *net.TCPConn) {
 //http://www.badgerr.co.uk/2011/06/20/golang-away-tcp-chat-server/
 
 
-func Copy(flag *connectionFlag, src *net.TCPConn, dst *net.TCPConn) (int64, error, error) {
+func Copy(flag *connectionFlag, src *net.TCPConn, dst *net.TCPConn, current int) (int64, error, error) {
+    
     
     written := int64(0)
     buf     := make([]byte, 32*1024)
     
-    src.SetReadDeadline(time.Now().Add(time.Second))
-    dst.SetWriteDeadline(time.Now().Add(time.Second))
     
     for {
         
@@ -231,11 +229,19 @@ func Copy(flag *connectionFlag, src *net.TCPConn, dst *net.TCPConn) (int64, erro
             return written, nil, nil
         }
         
+        src.SetReadDeadline(time.Now().Add(time.Second))
+        
         nr, err1 := src.Read(buf)
+        
+        err1 = filterTimeout(err1)
         
         if nr > 0 {
             
+            dst.SetWriteDeadline(time.Now().Add(time.Second))
+            
             nw, err2 := dst.Write(buf[0:nr])
+            
+            err2 = filterTimeout(err2)
             
             if nw > 0 {
                 written += int64(nw)
@@ -248,6 +254,8 @@ func Copy(flag *connectionFlag, src *net.TCPConn, dst *net.TCPConn) (int64, erro
             if nr != nw {
                 return written, err1, io.ErrShortWrite
             }
+            
+            continue
         }
         
         if err1 != nil {
@@ -256,4 +264,25 @@ func Copy(flag *connectionFlag, src *net.TCPConn, dst *net.TCPConn) (int64, erro
     }
 }
 
+func filterTimeout(err error) error {
+    
+    if err == io.EOF {
+        return err
+    }
+    
+    if isTimeout(err) {
+        return nil
+    }
+    
+    return err
+}
+
+func isTimeout(err error) bool {
+    
+    if neterr, ok := err.(net.Error); ok && neterr.Timeout() {
+        return true
+    }
+    
+    return false
+}
 
