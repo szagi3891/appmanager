@@ -53,11 +53,11 @@ func New(addr, log string, backend *backendModule.Backend) (*Proxy, error) {
 
 func (self *Proxy) Switch(backend *backendModule.Backend) {
     
-    //old := self.serverBackend
+    old := self.backend
     
     self.backend = backend
     
-    //old.WaitWhenAllClose()
+    old.Stop()
 }
 
 
