@@ -11,16 +11,14 @@ import (
 
 type Proxy struct {
     
-    addr     string
     log      string
-    build    string
     listener *net.TCPListener
     logCh    chan *string
     backend  *backendModule.Backend
 }
 
 
-func New(addr, log, build string, backend *backendModule.Backend) (*Proxy, error) {
+func New(addr, log string, backend *backendModule.Backend) (*Proxy, error) {
     
     
     addProxy, err1 := net.ResolveTCPAddr("tcp", addr)
@@ -41,9 +39,7 @@ func New(addr, log, build string, backend *backendModule.Backend) (*Proxy, error
     
     
     proxy := &Proxy{
-        addr     : addr,
         log      : log,
-        build    : build,
         listener : listener,
         logCh    : logCh,
         backend  : backend,

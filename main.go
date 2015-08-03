@@ -33,11 +33,45 @@ func main(){
     
     interruptNotify()
     
+    // struktura z listą buildów
+    //, "../appmanager_build"
     
-    backend1 := backendModule.New("127.0.0.1:9997")
+    
+    //testowanie czy katalog z logami istnieje,
+    //testowanie czy katalog z buildami istnieje
     
     
-    proxy, errStart := proxyModule.New("127.0.0.1:8888", "../appmanager_log", "../appmanager_build", backend1)
+    /*
+        lista
+
+            nie można przełączyć builda, jeśli trwa aktualnie przełączanie nowej wersji
+            przy uruchomionej aplikacji pokazywać ile aktualnie trwa połączeń
+
+            ewentualnie można zrobić strumieniowanie danych na temat ilości połączeń przełączanych z jednej wersji aplikacji na drugą
+    */
+    
+    //TODO - trzeba w pierwszej kolejności zrobić startowanie builda z konkretnej binarki
+    
+    //TODO - proxy będzie zarządzał numerami portów na których mogą pracować aplikacje
+    
+    
+    managerBackend := backendModule.Init("../wolnemedia", "../appmanager_build", 9990, 9999)
+    
+    
+                            //build w kontekście tego katalogu będzie odpalany
+    
+    
+    backend1, errCreate1 := managerBackend.New("main")       //127.0.0.1
+    
+    
+    if errCreate1 != nil {
+        fmt.Println(errCreate1)
+        os.Exit(1)
+    }
+    
+    
+    
+    proxy, errStart := proxyModule.New("127.0.0.1:8888", "../appmanager_log", backend1)
     
     if errStart != nil {
         panic(errStart)
@@ -47,13 +81,25 @@ func main(){
     fmt.Println("start proxy: ", proxy)
     
     
+    
     time.Sleep(time.Second * 10)
     
-    backend2 := backendModule.New("127.0.0.1:9998")
+    
     
     fmt.Println("przełączam backend")
     
+    
+    backend2, errBackend2 := managerBackend.New("main")
+    
+    if errBackend2 != nil {
+        fmt.Println(errBackend2)
+        os.Exit(1)
+    }
+    
+    
     proxy.Switch(backend2)
+    
+    
     
     
             //nie zakańczaj się
@@ -64,14 +110,17 @@ func main(){
     //start i stop nowego backandu
     
     
+    //TODO - nowy byt, struktura reprezentująca listę buildów ...
+    
+    
     /*
         build_3_20150801_143212     - numer kolejny i data utworzenia
-
+        
 
         makeBuild
             funkcja robi nowego builda i zwraca jego nazwę
         
-        runBuild
+        proxy.runBuild("nazwa buildu", port)
             nazwa buildu, numer portu
     */
 }
