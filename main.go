@@ -34,7 +34,7 @@ func main(){
     interruptNotify()
     
     
-    backend1   := backendModule.New("127.0.0.1:9997")
+    backend1 := backendModule.New("127.0.0.1:9997")
     
     
     proxy, errStart := proxyModule.New("127.0.0.1:8888", "../appmanager_log", "../appmanager_build", backend1)
@@ -59,6 +59,21 @@ func main(){
             //nie zakańczaj się
     stop := make(chan bool)
     <- stop
+    
+    
+    //start i stop nowego backandu
+    
+    
+    /*
+        build_3_20150801_143212     - numer kolejny i data utworzenia
+
+
+        makeBuild
+            funkcja robi nowego builda i zwraca jego nazwę
+        
+        runBuild
+            nazwa buildu, numer portu
+    */
 }
 
 
