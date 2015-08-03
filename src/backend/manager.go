@@ -6,6 +6,9 @@ import (
     "sync"
     "errors"
     "strconv"
+    "bytes"
+    "time"
+    "fmt"
 )
 
 
@@ -54,6 +57,72 @@ func (self *Manager) createNewBackend() (*Backend, error) {
 }
 
 
+func (self *Manager) getSha1Repo() (string, error) {
+    
+    cmd := exec.Command("git", "rev-parse", "HEAD")
+    
+    cmd.Dir = self.pwd
+    
+    var stderr bytes.Buffer
+	var stdout bytes.Buffer
+	
+	cmd.Stdout = &stdout
+	cmd.Stderr = &stderr
+    
+	err := cmd.Run()
+	
+    if err != nil {
+        return "", err
+    }
+    
+    out := stdout.String()
+    
+    if len(out) >= 40 {
+        return out[0:40], nil
+    }
+    
+    return "", errors.New("Zbyt mała odpowiedź")
+}
+
+
+func (self *Manager) MakeBuild() error {
+    
+    repoSha1, errRepo := self.getSha1Repo()
+    
+    if errRepo != nil {
+        return errRepo
+    }
+    
+    current := time.Now()
+    
+    year, montch, day := current.Date()
+    
+    hour   := current.Hour()
+    minute := current.Minute()
+    second := current.Second()
+    
+    name := "build_" + frm(year, 4) + frm(int(montch), 2) + frm(day, 2) + frm(hour, 2) + frm(minute, 2) + frm(second, 2) + "_" + repoSha1
+    
+    fmt.Println(name)
+    
+    //go build ./src/main.go
+    
+    return nil
+}
+
+
+func frm(liczba int, digit int) string {
+    
+    out := strconv.FormatInt(int64(liczba), 10)
+    
+    for len(out) < digit {
+        out = "0" + out
+    }
+    
+    return out
+}
+
+
 func (self *Manager) New(buildName string) (*Backend, error) {
     
     
@@ -69,8 +138,8 @@ func (self *Manager) New(buildName string) (*Backend, error) {
     
     cmd.Dir = self.pwd
     
-    out1 := outData{"stdout"}
-    out2 := outData{"stderr"}
+    out1 := outData{}
+    out2 := outData{}
     
     cmd.Stdout = &out1
     cmd.Stderr = &out2
@@ -81,6 +150,7 @@ func (self *Manager) New(buildName string) (*Backend, error) {
 		return nil, err
 	}
     
+    newBackend.process = cmd.Process
     
     return newBackend, nil
 }

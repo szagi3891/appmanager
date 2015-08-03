@@ -33,6 +33,9 @@ func main(){
     
     interruptNotify()
     
+    //git rev-parse HEAD
+    //pobranie aktualnego hasza komita z katalogu
+    
     // struktura z listą buildów
     //, "../appmanager_build"
     
@@ -58,13 +61,18 @@ func main(){
     managerBackend := backendModule.Init("../wolnemedia", "../appmanager_build", 9990, 9999)
     
     
+    managerBackend.MakeBuild()
+    
+    return
+    
                             //build w kontekście tego katalogu będzie odpalany
     
     
-    backend1, errCreate1 := managerBackend.New("main")       //127.0.0.1
+    backend1, errCreate1 := managerBackend.New("build_20150803111303_3128586f693bb8005253ae17eb0d95ea25573b94")       //127.0.0.1
     
     
     if errCreate1 != nil {
+        
         fmt.Println(errCreate1)
         os.Exit(1)
     }
@@ -89,9 +97,10 @@ func main(){
     fmt.Println("przełączam backend")
     
     
-    backend2, errBackend2 := managerBackend.New("main")
+    backend2, errBackend2 := managerBackend.New("build_20150803111303_3128586f693bb8005253ae17eb0d95ea25573b94")
     
     if errBackend2 != nil {
+        
         fmt.Println(errBackend2)
         os.Exit(1)
     }

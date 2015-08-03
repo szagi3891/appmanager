@@ -2,6 +2,7 @@ package backend
 
 
 import (
+    "os"
     "sync"
     "fmt"
     "strconv"
@@ -9,11 +10,12 @@ import (
 
 
 type Backend struct {
-    stop   bool
-    addr   string
-    port   int
-    mutex  sync.Mutex
-    active int
+    stop    bool
+    addr    string
+    port    int
+    mutex   sync.Mutex
+    active  int
+    process *os.Process
 }
 
 
@@ -23,7 +25,14 @@ func (self *Backend) checkStrop() {
     self.mutex.Unlock()
     
     if self.stop == true && self.active == 0 {
-        panic("TODO - stop")
+        
+        if self.process != nil {
+            
+            fmt.Println("zlecam morderstwo ...")
+            
+            self.process.Kill()
+            self.process = nil
+        }
     }
 }
 
