@@ -6,7 +6,7 @@ import (
     "time"
     "io"
     "fmt"
-    "../serverBackend"
+    backendModule "../backend"
 )
 
 
@@ -85,7 +85,7 @@ func (self *connectionFlag) Wait() {
 
 
 
-func HandleConn(backend *serverBackend.ServerBackend, connIn *net.TCPConn) error {
+func HandleConn(backend *backendModule.Backend, connIn *net.TCPConn) error {
     
     
     addrServer, errParse := net.ResolveTCPAddr("tcp", backend.GetAddr())

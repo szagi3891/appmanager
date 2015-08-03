@@ -4,10 +4,10 @@ package main
 import (
     "os"
     "os/signal"
-    "net"
     "fmt"
-    "./src/handleConn"
-    "./src/serverBackend"
+    proxyModule   "./src/proxy"
+    backendModule "./src/backend"
+    "time"
 )
 
 
@@ -34,38 +34,31 @@ func main(){
     interruptNotify()
     
     
-    addProxy, err1 := net.ResolveTCPAddr("tcp", "127.0.0.1:8888")
+    backend1   := backendModule.New("127.0.0.1:9997")
     
-    if err1 != nil {
-        panic(err1)
+    
+    proxy, errStart := proxyModule.New("127.0.0.1:8888", "../appmanager_log", "../appmanager_build", backend1)
+    
+    if errStart != nil {
+        panic(errStart)
     }
     
     
-    fmt.Println("start proxy: ", addProxy)
+    fmt.Println("start proxy: ", proxy)
     
     
-	listener, err := net.ListenTCP("tcp", addProxy)
+    time.Sleep(time.Second * 10)
     
-	if err != nil {
-		panic(err)
-	}
+    backend2 := backendModule.New("127.0.0.1:9998")
     
-    serverBackend := serverBackend.New("127.0.0.1:9999")
+    fmt.Println("przełączam backend")
     
-	for {
-        
-		conn, err := listener.AcceptTCP()
-        
-		if err != nil {
-			panic(err)
-		}
-        
-        errConnectect := handleConn.HandleConn(serverBackend, conn)
-        
-        if errConnectect != nil {
-            panic(errConnectect)
-        }
-	}
+    proxy.Switch(backend2)
+    
+    
+            //nie zakańczaj się
+    stop := make(chan bool)
+    <- stop
 }
 
 

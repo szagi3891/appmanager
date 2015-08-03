@@ -7,28 +7,28 @@ import (
 )
 
 
-type ServerBackend struct {
+type Backend struct {
     addr   string
     mutex  sync.Mutex
     count  int
     active int
 }
 
-func New(addr string) *ServerBackend {
+func New(addr string) *Backend {
     
-    return &ServerBackend{
+    return &Backend{
         addr : addr,
         count : 0,
     }
 }
 
 
-func (self *ServerBackend) Active() int {
+func (self *Backend) Active() int {
     
     return self.active
 }
 
-func (self *ServerBackend) GetAddr() string {
+func (self *Backend) GetAddr() string {
     
     return self.addr
 }
@@ -36,19 +36,19 @@ func (self *ServerBackend) GetAddr() string {
 
 //func (self *ServerBackend) Inc() {
 
-func (self *ServerBackend) Inc() {
+func (self *Backend) Inc() {
     
     self.mutex.Lock()
     self.active++
     self.count++
-    fmt.Println("nowe połączenie: ", self.count)
+    fmt.Println("nowe połączenie: ", self.addr, " count: ", self.count, " active: ", self.active)
 	self.mutex.Unlock()
 }
 
-func (self *ServerBackend) Sub() {
+func (self *Backend) Sub() {
     
     self.mutex.Lock()
     self.active--
-    fmt.Println("zamykam        : ", self.count)
+    fmt.Println("zamykam        : ", self.addr, " count: ", self.count, " active: ", self.active)
 	self.mutex.Unlock()
 }
