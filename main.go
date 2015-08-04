@@ -8,7 +8,7 @@ import (
     proxyModule   "./src/proxy"
     backendModule "./src/backend"
     "time"
-    "./src/config"
+    configModule "./src/config"
 )
 
 
@@ -42,7 +42,7 @@ func main(){
     }
     
     
-    configFile, errParse := config.Parse(os.Args[1])
+    config, errParse := configModule.Parse(os.Args[1])
     
     if errParse != nil {
         
@@ -89,7 +89,7 @@ func main(){
     
     //"/usr/local/go/bin/go", 
     
-    managerBackend := backendModule.Init(configFile.GetGoCmd(), configFile.GetAppDir(), configFile.GetBuildDir(), configFile.GetAppMain(), configFile.GetPortFrom(), configFile.GetPortTo())
+    managerBackend := backendModule.Init(config.GetGoCmd(), config.GetAppDir(), config.GetBuildDir(), config.GetAppMain(), config.GetPortFrom(), config.GetPortTo())
     
     
     /*
@@ -107,6 +107,21 @@ func main(){
 
     gopath /home/grzegorz/GOPATH
     appuser
+    */
+    
+    /*
+        todo - zrobić obsługę parametrów dotyczących rotowania logów
+        rotatesize : granica w bajtach po której przekroczeniu rozpoczynamy nowy plik
+        rotatetime : granica w sekundach po przekroczeniu której rozpoczynamy nowy plik
+        
+        nowy proces backendowy
+            inicjuje dwa rotatory w ramach strumieni wyjściowych z procesu
+        przy zabijaniu procesu trzeba wysłać sygnały do tych dwóch obiektów odnośnie tego że mają pozamykać ładnie
+        pliki z logami na których operowały ...
+        
+        przy zrotowaniu pliku
+            odpallić nową gorutinę która będzie kompresowałą stary plik i zrobi z niego gzip-a
+    
     */
                             //build w kontekście tego katalogu będzie odpalany
     
