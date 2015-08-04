@@ -12,7 +12,7 @@ import (
 )
 
 
-func Init(pwd string, buildDir string, portStart, portEnd int) *Manager {
+func Init(gocmd, pwd, buildDir string, portStart, portEnd int) *Manager {
     
     ports := map[int]*Backend{}
     
@@ -21,6 +21,7 @@ func Init(pwd string, buildDir string, portStart, portEnd int) *Manager {
     }
     
     return &Manager{
+        gocmd    : gocmd,
         pwd      : pwd,
         buildDir : buildDir,
         ports    : ports,
@@ -29,6 +30,7 @@ func Init(pwd string, buildDir string, portStart, portEnd int) *Manager {
 
 
 type Manager struct {
+    gocmd    string
     mutex    sync.Mutex
     pwd      string
     buildDir string
@@ -101,14 +103,39 @@ func (self *Manager) MakeBuild() error {
     minute := current.Minute()
     second := current.Second()
     
-    name := "build_" + frm(year, 4) + frm(int(montch), 2) + frm(day, 2) + frm(hour, 2) + frm(minute, 2) + frm(second, 2) + "_" + repoSha1
+    buildName := "build_" + frm(year, 4) + frm(int(montch), 2) + frm(day, 2) + frm(hour, 2) + frm(minute, 2) + frm(second, 2) + "_" + repoSha1
     
-    fmt.Println(name)
+    //
+    
+    //
+    
+    fmt.Println(buildName)
     
     
     //go build -o ../appmanager_build/nowy ../wolnemedia/src/main.go
     
     //go build ./src/main.go
+    
+    
+    panic("TODO - trzeba zająć się appname, pobrać z konfiga i przekazać tutaj")
+    
+    cmd := exec.Command(self.gocmd, "build", "-o", self.buildDir + "/" + buildName, "")
+    
+    cmd.Dir = self.pwd
+    
+    out1 := outData{}
+    out2 := outData{}
+    
+    cmd.Stdout = &out1
+    cmd.Stderr = &out2
+    
+	err := cmd.Start()
+    
+    if err != nil {
+		return nil, err
+	}
+    
+    
     
     return nil
 }

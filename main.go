@@ -32,15 +32,17 @@ func interruptNotify() {
 
 func main(){
     
+    
     interruptNotify()
+    
     
     if len(os.Args) != 2 {
         fmt.Println("Spodziewano się dokładnie dwóch parametrów")
+        os.Exit(1)
     }
     
-    configField := []string{"port", "gocmd", "appdir", "appmain", "portfrom", "portto"}
     
-    configFile, errParse := config.Parse(os.Args[1], &configField)
+    configFile, errParse := config.Parse(os.Args[1])
     
     if errParse != nil {
         
@@ -49,16 +51,10 @@ func main(){
     }
     
     
+    
     //TODO - sprawdzić czy takie polecenie się wykona :
     //GOPATH=/home/wm/GOPATH /usr/local/go/bin/go
     
-    
-    
-    //git rev-parse HEAD
-    //pobranie aktualnego hasza komita z katalogu
-    
-    // struktura z listą buildów
-    //, "../appmanager_build"
     
     
     //testowanie czy katalog z logami istnieje,
@@ -93,8 +89,7 @@ func main(){
     
     //"/usr/local/go/bin/go", 
     
-    
-    managerBackend := backendModule.Init("../wolnemedia", "../appmanager_build", 9990, 9999)
+    managerBackend := backendModule.Init(configFile.GetGoCmd(), configFile.GetAppDir(), configFile.GetBuildDir(), configFile.GetPortFrom(), configFile.GetPortTo())
     
     
     managerBackend.MakeBuild()

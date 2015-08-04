@@ -1,20 +1,35 @@
 package config
 
+
 import (
-    //"fmt"
+    "fmt"
     "strings"
     "os"
     "bufio"
+    "path/filepath"
+    "strconv"
     "../errorStack"
 )
 
 
 type File struct {
-    config  map[string]string
+    appDir   string
+    buildDir string
+    portFrom int
+    portTo   int
+    goCmd    string
 }
 
 
-func Parse(path string, keys *[]string) (*File, *errorStack.Error) {
+func Parse(path string) (*File, *errorStack.Error) {
+    
+    
+    path, errAbsPath := filepath.Abs(path)
+    
+    if errAbsPath != nil {
+        return nil, errorStack.From(errAbsPath)
+    }
+    
     
     lines, errRead := readLines(path)
     
@@ -22,15 +37,75 @@ func Parse(path string, keys *[]string) (*File, *errorStack.Error) {
         return nil, errRead
     }
     
+    
     mapConfig, errConvert := convertToMap(lines)
     
     if errConvert != nil {
         return nil, errConvert
     }
     
-    outConfig := map[string]string{}
     
-    for _, paramName := range (*keys) {
+    pathBase := filepath.Dir(path)
+    
+    
+    
+    configFile := File{}
+    
+    
+    configFile.buildDir = pathBase + "/build";
+    
+    
+    
+    
+    appDir, errAppDir := getFromMap(&mapConfig, "appdir", pathBase)
+    
+    if errAppDir != nil {
+        return nil, errAppDir
+    }
+    
+    configFile.appDir = appDir
+    
+    
+    portFrom, errPortFrom := getInt(&mapConfig, "portfrom")
+    
+    if errPortFrom != nil {
+        return nil, errPortFrom
+    }
+    
+    configFile.portFrom = portFrom
+    
+    
+    portTo, errPortTo := getInt(&mapConfig, "portto")
+    
+    if errPortTo != nil {
+        return nil, errPortTo
+    }
+    
+    configFile.portTo = portTo
+    
+    
+    goCmd, errGoCmd := getFromMap(&mapConfig, "gocmd", pathBase)
+    
+    if errGoCmd != nil {
+        return nil, errGoCmd
+    }
+    
+    configFile.goCmd = goCmd
+    
+    
+    
+    fmt.Println(configFile)
+    
+    /*
+    GetBuildDir
+    "../appmanager_build"
+    */
+    
+    //configFile.appdir = 
+    /*
+    keys := []string{"port", "appmain"}
+    
+    for _, paramName := range keys {
         
         value, isSet := mapConfig[paramName]
         
@@ -40,10 +115,70 @@ func Parse(path string, keys *[]string) (*File, *errorStack.Error) {
             return nil, errorStack.Create("Brak klucza: " + paramName)
         }
     }
+    */
     
-    return &File{config : outConfig}, nil
+    return &configFile, nil
 }
 
+
+func (self *File) GetPortFrom() int {
+    
+    return self.portFrom
+}
+
+func (self *File) GetGoCmd() string {
+    
+    return self.goCmd
+}
+
+func (self *File) GetPortTo() int {
+    
+    return self.portTo
+}
+
+func (self *File) GetAppDir() string {
+    
+    return self.appDir
+}
+
+func (self *File) GetBuildDir() string {
+    
+    return self.buildDir
+}
+
+func getInt(mapConfig *map[string]string, propName string) (int, *errorStack.Error) {
+    
+    value, isValue := (*mapConfig)[propName]
+    
+    if isValue == false {
+        return 0, errorStack.Create("Brak zmiennej : " + propName)
+    }
+    
+    valueParse, errParse := strconv.ParseInt(value, 10, 64)
+    
+    if errParse != nil {
+        return 0, errorStack.From(errParse)
+    }
+    
+    return int(valueParse), nil
+}
+
+func getFromMap(mapConfig *map[string]string, propName, pathBase string) (string, *errorStack.Error) {
+    
+    value, isValue := (*mapConfig)[propName]
+    
+    if isValue == false {
+        return "", errorStack.Create("Brak zmiennej : " + propName)
+    }
+    
+    valueAbs, errApp := filepath.Abs(pathBase + "/" + value)
+    
+    if errApp != nil {
+        return "", errorStack.From(errApp)
+    }
+    
+    return valueAbs, nil
+}
 
 func convertToMap(lines *[]string) (map[string]string, *errorStack.Error) {
     
@@ -68,7 +203,6 @@ func convertToMap(lines *[]string) (map[string]string, *errorStack.Error) {
     
     return configMap, nil
 }
-
 
 func parseLine(line string) (string, string, bool, *errorStack.Error) {
     
