@@ -105,6 +105,9 @@ func (self *Manager) MakeBuild() error {
     
     fmt.Println(name)
     
+    
+    //go build -o ../appmanager_build/nowy ../wolnemedia/src/main.go
+    
     //go build ./src/main.go
     
     return nil
@@ -123,6 +126,7 @@ func frm(liczba int, digit int) string {
 }
 
 
+//uruchomienie konkretnego builda
 func (self *Manager) New(buildName string) (*Backend, error) {
     
     

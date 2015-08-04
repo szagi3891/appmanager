@@ -8,6 +8,7 @@ import (
     proxyModule   "./src/proxy"
     backendModule "./src/backend"
     "time"
+    "./src/config"
 )
 
 
@@ -33,6 +34,26 @@ func main(){
     
     interruptNotify()
     
+    if len(os.Args) != 2 {
+        fmt.Println("Spodziewano się dokładnie dwóch parametrów")
+    }
+    
+    configField := []string{"port", "gocmd", "appdir", "appmain", "portfrom", "portto"}
+    
+    configFile, errParse := config.Parse(os.Args[1], &configField)
+    
+    if errParse != nil {
+        
+        fmt.Println(errParse)
+        os.Exit(1)
+    }
+    
+    
+    //TODO - sprawdzić czy takie polecenie się wykona :
+    //GOPATH=/home/wm/GOPATH /usr/local/go/bin/go
+    
+    
+    
     //git rev-parse HEAD
     //pobranie aktualnego hasza komita z katalogu
     
@@ -56,6 +77,21 @@ func main(){
     //TODO - trzeba w pierwszej kolejności zrobić startowanie builda z konkretnej binarki
     
     //TODO - proxy będzie zarządzał numerami portów na których mogą pracować aplikacje
+    
+    
+    
+    
+    //GOPATH=/home/wm/GOPATH /usr/local/go/bin/go build -o testowy_build ./cms/src/main.go
+    //po zbudowaniu binarki powinien zostać zmieniony włąściciel oraz grupa
+    
+    //odpalanie procesu powinno się odbywać na określonym użytkowniku
+    //https://golang.org/pkg/os/exec/#Cmd               -> SysProcAttr
+    //https://golang.org/pkg/syscall/#SysProcAttr       -> Credential
+    //https://golang.org/pkg/syscall/#Credential        -> Credential struct
+    
+    
+    
+    //"/usr/local/go/bin/go", 
     
     
     managerBackend := backendModule.Init("../wolnemedia", "../appmanager_build", 9990, 9999)
