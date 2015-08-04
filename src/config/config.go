@@ -18,6 +18,7 @@ type File struct {
     portFrom int
     portTo   int
     goCmd    string
+    appMain  string
 }
 
 
@@ -94,16 +95,20 @@ func Parse(path string) (*File, *errorStack.Error) {
     
     
     
+    appMain, errAppMain := getFromMap(&mapConfig, "appmain", pathBase)
+    
+    if errAppMain != nil {
+        return nil, errAppMain
+    }
+    
+    configFile.appMain = appMain
+    
+    
+    
     fmt.Println(configFile)
     
     /*
-    GetBuildDir
-    "../appmanager_build"
-    */
-    
-    //configFile.appdir = 
-    /*
-    keys := []string{"port", "appmain"}
+    keys := []string{"port"}
     
     for _, paramName := range keys {
         
@@ -125,6 +130,14 @@ func (self *File) GetPortFrom() int {
     
     return self.portFrom
 }
+
+
+
+func (self *File) GetAppMain() string {
+    
+    return self.appMain
+}
+
 
 func (self *File) GetGoCmd() string {
     
@@ -163,6 +176,19 @@ func getInt(mapConfig *map[string]string, propName string) (int, *errorStack.Err
     return int(valueParse), nil
 }
 
+func isRelative(path string) bool {
+        
+    if len(path) >= 2 && path[0:2] == "./" {
+        return true
+    } else
+    
+    if len(path) >= 3 && path[0:3] == "../" {
+        return true
+    }
+    
+    return false
+}
+
 func getFromMap(mapConfig *map[string]string, propName, pathBase string) (string, *errorStack.Error) {
     
     value, isValue := (*mapConfig)[propName]
@@ -171,13 +197,20 @@ func getFromMap(mapConfig *map[string]string, propName, pathBase string) (string
         return "", errorStack.Create("Brak zmiennej : " + propName)
     }
     
-    valueAbs, errApp := filepath.Abs(pathBase + "/" + value)
-    
-    if errApp != nil {
-        return "", errorStack.From(errApp)
+    if isRelative(value) {
+        
+        valueAbs, errApp := filepath.Abs(pathBase + "/" + value)
+
+        if errApp != nil {
+            return "", errorStack.From(errApp)
+        }
+
+        return valueAbs, nil
+        
+    } else {
+        
+        return value, nil
     }
-    
-    return valueAbs, nil
 }
 
 func convertToMap(lines *[]string) (map[string]string, *errorStack.Error) {

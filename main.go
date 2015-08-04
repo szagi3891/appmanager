@@ -89,17 +89,29 @@ func main(){
     
     //"/usr/local/go/bin/go", 
     
-    managerBackend := backendModule.Init(configFile.GetGoCmd(), configFile.GetAppDir(), configFile.GetBuildDir(), configFile.GetPortFrom(), configFile.GetPortTo())
+    managerBackend := backendModule.Init(configFile.GetGoCmd(), configFile.GetAppDir(), configFile.GetBuildDir(), configFile.GetAppMain(), configFile.GetPortFrom(), configFile.GetPortTo())
     
     
-    managerBackend.MakeBuild()
+    /*
+    errMake := managerBackend.MakeBuild()
+    
+    fmt.Println(errMake)
     
     return
+    */
     
+    
+    /*
+
+        Zrobić obsługę parametrów
+
+    gopath /home/grzegorz/GOPATH
+    appuser
+    */
                             //build w kontekście tego katalogu będzie odpalany
     
     
-    backend1, errCreate1 := managerBackend.New("build_20150803111303_3128586f693bb8005253ae17eb0d95ea25573b94")       //127.0.0.1
+    backend1, errCreate1 := managerBackend.New("build_20150804141001_381cd491cd49208d4a667912ef55fb78ab8469b1")       //127.0.0.1
     
     
     if errCreate1 != nil {

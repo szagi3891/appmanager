@@ -4,15 +4,15 @@ package backend
 import (
     "os/exec"
     "sync"
-    "errors"
     "strconv"
     "bytes"
     "time"
     "fmt"
+    "../errorStack"
 )
 
 
-func Init(gocmd, pwd, buildDir string, portStart, portEnd int) *Manager {
+func Init(gocmd, pwd, buildDir, appMain string, portStart, portEnd int) *Manager {
     
     ports := map[int]*Backend{}
     
@@ -24,6 +24,7 @@ func Init(gocmd, pwd, buildDir string, portStart, portEnd int) *Manager {
         gocmd    : gocmd,
         pwd      : pwd,
         buildDir : buildDir,
+        appMain  : appMain,
         ports    : ports,
     }
 }
@@ -34,11 +35,12 @@ type Manager struct {
     mutex    sync.Mutex
     pwd      string
     buildDir string
+    appMain  string
     ports    map[int]*Backend
 }
 
 
-func (self *Manager) createNewBackend() (*Backend, error) {
+func (self *Manager) createNewBackend() (*Backend, *errorStack.Error) {
     
     self.mutex.Lock()
     self.mutex.Unlock()
@@ -55,11 +57,11 @@ func (self *Manager) createNewBackend() (*Backend, error) {
         }
     }
     
-    return nil, errors.New("Error alocation ports")
+    return nil, errorStack.Create("Error alocation ports")
 }
 
 
-func (self *Manager) getSha1Repo() (string, error) {
+func (self *Manager) getSha1Repo() (string, *errorStack.Error) {
     
     cmd := exec.Command("git", "rev-parse", "HEAD")
     
@@ -74,7 +76,7 @@ func (self *Manager) getSha1Repo() (string, error) {
 	err := cmd.Run()
 	
     if err != nil {
-        return "", err
+        return "", errorStack.From(err)
     }
     
     out := stdout.String()
@@ -83,11 +85,11 @@ func (self *Manager) getSha1Repo() (string, error) {
         return out[0:40], nil
     }
     
-    return "", errors.New("Zbyt mała odpowiedź")
+    return "", errorStack.Create("Zbyt mała odpowiedź")
 }
 
 
-func (self *Manager) MakeBuild() error {
+func (self *Manager) MakeBuild() *errorStack.Error {
     
     repoSha1, errRepo := self.getSha1Repo()
     
@@ -105,21 +107,13 @@ func (self *Manager) MakeBuild() error {
     
     buildName := "build_" + frm(year, 4) + frm(int(montch), 2) + frm(day, 2) + frm(hour, 2) + frm(minute, 2) + frm(second, 2) + "_" + repoSha1
     
-    //
-    
-    //
     
     fmt.Println(buildName)
-    
-    
+
     //go build -o ../appmanager_build/nowy ../wolnemedia/src/main.go
-    
     //go build ./src/main.go
     
-    
-    panic("TODO - trzeba zająć się appname, pobrać z konfiga i przekazać tutaj")
-    
-    cmd := exec.Command(self.gocmd, "build", "-o", self.buildDir + "/" + buildName, "")
+    cmd := exec.Command(self.gocmd, "build", "-o", self.buildDir + "/" + buildName, self.appMain)
     
     cmd.Dir = self.pwd
     
@@ -129,13 +123,11 @@ func (self *Manager) MakeBuild() error {
     cmd.Stdout = &out1
     cmd.Stderr = &out2
     
-	err := cmd.Start()
+	err := cmd.Run()
     
     if err != nil {
-		return nil, err
+        return errorStack.From(err)
 	}
-    
-    
     
     return nil
 }
@@ -154,7 +146,7 @@ func frm(liczba int, digit int) string {
 
 
 //uruchomienie konkretnego builda
-func (self *Manager) New(buildName string) (*Backend, error) {
+func (self *Manager) New(buildName string) (*Backend, *errorStack.Error) {
     
     
     newBackend, errCerate := self.createNewBackend()
@@ -178,7 +170,7 @@ func (self *Manager) New(buildName string) (*Backend, error) {
 	err := cmd.Start()
     
     if err != nil {
-		return nil, err
+        return nil, errorStack.From(err)
 	}
     
     newBackend.process = cmd.Process
