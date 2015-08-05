@@ -56,19 +56,6 @@ func main(){
     //lsof -i - coś podobnego
     
     
-    //testowanie czy katalog z logami istnieje,
-    //testowanie czy katalog z buildami istnieje
-    
-    
-    /*
-        lista
-
-            nie można przełączyć builda, jeśli trwa aktualnie przełączanie nowej wersji
-            przy uruchomionej aplikacji pokazywać ile aktualnie trwa połączeń
-
-            ewentualnie można zrobić strumieniowanie danych na temat ilości połączeń przełączanych z jednej wersji aplikacji na drugą
-    */
-    
     managerBackend, errInitManager := backendModule.Init(config.GetGoCmd(), config.GetAppDir(), config.GetBuildDir(), config.GetAppMain(), config.GetAppUser(), config.GetGopath(), config.GetPortFrom(), config.GetPortTo())
     
     
@@ -90,6 +77,14 @@ func main(){
     
     
     
+    /*
+        lista
+
+            nie można przełączyć builda, jeśli trwa aktualnie przełączanie nowej wersji
+            przy uruchomionej aplikacji pokazywać ile aktualnie trwa połączeń
+
+            ewentualnie można zrobić strumieniowanie danych na temat ilości połączeń przełączanych z jednej wersji aplikacji na drugą
+    */
     
     /*
         todo - zrobić obsługę parametrów dotyczących rotowania logów
@@ -174,6 +169,3 @@ func main(){
             nazwa buildu, numer portu
     */
 }
-
-
-//<-chan

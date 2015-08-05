@@ -60,6 +60,19 @@ func Parse(path string) (*File, *errorStack.Error) {
     configFile.buildDir = pathBase + "/build"
     configFile.logDir   = pathBase + "/log"
     
+    errCheckBuildDir := checkDirectory(configFile.buildDir)
+    
+    if errCheckBuildDir != nil {
+        return nil, errCheckBuildDir
+    }
+    
+    errCheckLogDir := checkDirectory(configFile.logDir)
+    
+    if errCheckLogDir != nil {
+        return nil, errCheckLogDir
+    }
+    
+    
     
     appDir, errAppDir := getFromMap(&mapConfig, "appdir", pathBase)
     
@@ -139,6 +152,25 @@ func Parse(path string) (*File, *errorStack.Error) {
     
     return &configFile, nil
 }
+
+
+func checkDirectory(path string) *errorStack.Error {
+
+	info, err := os.Stat(path)
+
+	if err != nil {
+        
+        return errorStack.From(err)
+	}
+    
+	if info.IsDir() == false {
+        
+        return errorStack.Create("it's a directory: " + path)
+	}
+    
+    return nil
+}
+
 
 func (self *File) GetPortMain() int {
     return self.portMain
