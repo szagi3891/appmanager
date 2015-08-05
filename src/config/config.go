@@ -2,7 +2,7 @@ package config
 
 
 import (
-    "fmt"
+    //"fmt"
     "strings"
     "os"
     "bufio"
@@ -20,6 +20,7 @@ type File struct {
     goCmd    string
     appMain  string
     appUser  string
+    gopath   string
 }
 
 
@@ -115,28 +116,25 @@ func Parse(path string) (*File, *errorStack.Error) {
     configFile.appUser = appUser
     
     
+    gopath, errGopath := getFromMap(&mapConfig, "gopath", pathBase)
     
-    
-    fmt.Println(configFile)
-    
-    /*
-    keys := []string{"port"}
-    
-    for _, paramName := range keys {
-        
-        value, isSet := mapConfig[paramName]
-        
-        if isSet {
-            outConfig[paramName] = value
-        } else {
-            return nil, errorStack.Create("Brak klucza: " + paramName)
-        }
+    if errGopath != nil {
+        return nil, errGopath
     }
-    */
+    
+    configFile.gopath = gopath
+    
+    
+    
     
     return &configFile, nil
 }
 
+
+func (self *File) GetGopath() string {
+    
+    return self.gopath
+}
 
 func (self *File) GetAppUser() string {
     

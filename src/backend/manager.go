@@ -14,7 +14,7 @@ import (
 )
 
 
-func Init(gocmd, pwd, buildDir, appMain, appUser string, portStart, portEnd int) (*Manager, *errorStack.Error) {
+func Init(gocmd, pwd, buildDir, appMain, appUser, gopath string, portStart, portEnd int) (*Manager, *errorStack.Error) {
     
     ports := map[int]*Backend{}
     
@@ -37,6 +37,7 @@ func Init(gocmd, pwd, buildDir, appMain, appUser string, portStart, portEnd int)
         ports    : ports,
         uid      : uid,
         gid      : gid,
+        gopath   : gopath,
     }, nil
 }
 
@@ -76,6 +77,7 @@ type Manager struct {
     ports    map[int]*Backend
     uid      uint32
     gid      uint32
+    gopath   string
 }
 
 
@@ -136,24 +138,21 @@ func (self *Manager) MakeBuild() *errorStack.Error {
         return errRepo
     }
     
-    current := time.Now()
     
+    current           := time.Now()
     year, montch, day := current.Date()
+    hour              := current.Hour()
+    minute            := current.Minute()
+    second            := current.Second()
     
-    hour   := current.Hour()
-    minute := current.Minute()
-    second := current.Second()
     
     buildName := "build_" + frm(year, 4) + frm(int(montch), 2) + frm(day, 2) + frm(hour, 2) + frm(minute, 2) + frm(second, 2) + "_" + repoSha1
     
-    //fmt.Println(buildName)
-    
-    //go build -o ../appmanager_build/nowy ../wolnemedia/src/main.go
-    //go build ./src/main.go
     
     cmd := exec.Command(self.gocmd, "build", "-o", self.buildDir + "/" + buildName, self.appMain)
     
     cmd.Dir = self.pwd
+    cmd.Env = []string{"GOPATH=" + self.gopath}
     
     out1 := outData{}
     out2 := outData{}

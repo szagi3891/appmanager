@@ -33,13 +33,13 @@ func interruptNotify() {
 func main(){
     
     
-    interruptNotify()
-    
-    
     if len(os.Args) != 2 {
         fmt.Println("Spodziewano się dokładnie dwóch parametrów")
         os.Exit(1)
     }
+    
+    
+    interruptNotify()
     
     
     config, errParse := configModule.Parse(os.Args[1])
@@ -69,12 +69,7 @@ func main(){
             ewentualnie można zrobić strumieniowanie danych na temat ilości połączeń przełączanych z jednej wersji aplikacji na drugą
     */
     
-    //TODO - trzeba w pierwszej kolejności zrobić startowanie builda z konkretnej binarki
-    
-    //TODO - proxy będzie zarządzał numerami portów na których mogą pracować aplikacje
-    
-    
-    managerBackend, errInitManager := backendModule.Init(config.GetGoCmd(), config.GetAppDir(), config.GetBuildDir(), config.GetAppMain(), config.GetAppUser(), config.GetPortFrom(), config.GetPortTo())
+    managerBackend, errInitManager := backendModule.Init(config.GetGoCmd(), config.GetAppDir(), config.GetBuildDir(), config.GetAppMain(), config.GetAppUser(), config.GetGopath(), config.GetPortFrom(), config.GetPortTo())
     
     
     if errInitManager != nil {
@@ -83,22 +78,17 @@ func main(){
         os.Exit(1)
     }
     
+    
     /*
     errMake := managerBackend.MakeBuild()
     
-    fmt.Println(errMake)
+    fmt.Println("errMake:", errMake)
     
     return
     */
     
     
     
-    /*
-
-        Zrobić obsługę parametrów
-
-    gopath /home/grzegorz/GOPATH
-    */
     
     /*
         todo - zrobić obsługę parametrów dotyczących rotowania logów
@@ -115,6 +105,23 @@ func main(){
     
     */
                             //build w kontekście tego katalogu będzie odpalany
+    
+    
+    /*
+    keys := []string{"port"}
+    
+    for _, paramName := range keys {
+        
+        value, isSet := mapConfig[paramName]
+        
+        if isSet {
+            outConfig[paramName] = value
+        } else {
+            return nil, errorStack.Create("Brak klucza: " + paramName)
+        }
+    }
+    */
+    
     
     
     backend1, errCreate1 := managerBackend.New("build_20150804140526_381cd491cd49208d4a667912ef55fb78ab8469b1")       //127.0.0.1
