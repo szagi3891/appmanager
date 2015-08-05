@@ -120,7 +120,7 @@ func main(){
     
     
     
-    proxy, errStart := proxyModule.New(config.GetPortMain(), "../appmanager_log", backend1)
+    proxy, errStart := proxyModule.New(config.GetPortMain(), config.GetLogDir(), backend1)
     
     if errStart != nil {
         panic(errStart)

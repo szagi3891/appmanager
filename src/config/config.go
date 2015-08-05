@@ -15,6 +15,7 @@ import (
 type File struct {
     appDir   string
     buildDir string
+    logDir   string
     portMain int
     portFrom int
     portTo   int
@@ -56,9 +57,8 @@ func Parse(path string) (*File, *errorStack.Error) {
     configFile := File{}
     
     
-    configFile.buildDir = pathBase + "/build";
-    
-    
+    configFile.buildDir = pathBase + "/build"
+    configFile.logDir   = pathBase + "/log"
     
     
     appDir, errAppDir := getFromMap(&mapConfig, "appdir", pathBase)
@@ -185,6 +185,11 @@ func (self *File) GetAppDir() string {
 func (self *File) GetBuildDir() string {
     
     return self.buildDir
+}
+
+func (self *File) GetLogDir() string {
+    
+    return self.logDir
 }
 
 func getInt(mapConfig *map[string]string, propName string) (int, *errorStack.Error) {
