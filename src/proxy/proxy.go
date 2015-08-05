@@ -4,6 +4,7 @@ package proxy
 import (
     "net"
     "fmt"
+    "strconv"
     "../handleConn"
     backendModule "../backend"
 )
@@ -18,8 +19,9 @@ type Proxy struct {
 }
 
 
-func New(addr, log string, backend *backendModule.Backend) (*Proxy, error) {
+func New(mainPort int, log string, backend *backendModule.Backend) (*Proxy, error) {
     
+    addr := "127.0.0.1:" + strconv.FormatInt(int64(mainPort), 10)
     
     addProxy, err1 := net.ResolveTCPAddr("tcp", addr)
     

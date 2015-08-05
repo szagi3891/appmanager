@@ -15,6 +15,7 @@ import (
 type File struct {
     appDir   string
     buildDir string
+    portMain int
     portFrom int
     portTo   int
     goCmd    string
@@ -67,6 +68,15 @@ func Parse(path string) (*File, *errorStack.Error) {
     }
     
     configFile.appDir = appDir
+    
+    
+    portMain, errPortMain := getInt(&mapConfig, "portmain")
+    
+    if errPortMain != nil {
+        return nil, errPortMain
+    }
+    
+    configFile.portMain = portMain
     
     
     portFrom, errPortFrom := getInt(&mapConfig, "portfrom")
@@ -130,6 +140,9 @@ func Parse(path string) (*File, *errorStack.Error) {
     return &configFile, nil
 }
 
+func (self *File) GetPortMain() int {
+    return self.portMain
+}
 
 func (self *File) GetGopath() string {
     

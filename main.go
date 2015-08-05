@@ -79,6 +79,7 @@ func main(){
     }
     
     
+    
     /*
     errMake := managerBackend.MakeBuild()
     
@@ -107,24 +108,8 @@ func main(){
                             //build w kontekście tego katalogu będzie odpalany
     
     
-    /*
-    keys := []string{"port"}
     
-    for _, paramName := range keys {
-        
-        value, isSet := mapConfig[paramName]
-        
-        if isSet {
-            outConfig[paramName] = value
-        } else {
-            return nil, errorStack.Create("Brak klucza: " + paramName)
-        }
-    }
-    */
-    
-    
-    
-    backend1, errCreate1 := managerBackend.New("build_20150804140526_381cd491cd49208d4a667912ef55fb78ab8469b1")       //127.0.0.1
+    backend1, errCreate1 := managerBackend.New("build_20150804140526_381cd491cd49208d4a667912ef55fb78ab8469b1")
     
     
     if errCreate1 != nil {
@@ -135,7 +120,7 @@ func main(){
     
     
     
-    proxy, errStart := proxyModule.New("127.0.0.1:8888", "../appmanager_log", backend1)
+    proxy, errStart := proxyModule.New(config.GetPortMain(), "../appmanager_log", backend1)
     
     if errStart != nil {
         panic(errStart)
