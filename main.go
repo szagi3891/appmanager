@@ -51,10 +51,9 @@ func main(){
     }
     
     
-    
-    //TODO - sprawdzić czy takie polecenie się wykona :
-    //GOPATH=/home/wm/GOPATH /usr/local/go/bin/go
-    
+    //listowanie wszystkich aplikacji słuchających na porcie
+    //netstat -tulpn
+    //lsof -i - coś podobnego
     
     
     //testowanie czy katalog z logami istnieje,
@@ -75,22 +74,14 @@ func main(){
     //TODO - proxy będzie zarządzał numerami portów na których mogą pracować aplikacje
     
     
+    managerBackend, errInitManager := backendModule.Init(config.GetGoCmd(), config.GetAppDir(), config.GetBuildDir(), config.GetAppMain(), config.GetAppUser(), config.GetPortFrom(), config.GetPortTo())
     
     
-    //GOPATH=/home/wm/GOPATH /usr/local/go/bin/go build -o testowy_build ./cms/src/main.go
-    //po zbudowaniu binarki powinien zostać zmieniony włąściciel oraz grupa
-    
-    //odpalanie procesu powinno się odbywać na określonym użytkowniku
-    //https://golang.org/pkg/os/exec/#Cmd               -> SysProcAttr
-    //https://golang.org/pkg/syscall/#SysProcAttr       -> Credential
-    //https://golang.org/pkg/syscall/#Credential        -> Credential struct
-    
-    
-    
-    //"/usr/local/go/bin/go", 
-    
-    managerBackend := backendModule.Init(config.GetGoCmd(), config.GetAppDir(), config.GetBuildDir(), config.GetAppMain(), config.GetPortFrom(), config.GetPortTo())
-    
+    if errInitManager != nil {
+        
+        fmt.Println(errInitManager)
+        os.Exit(1)
+    }
     
     /*
     errMake := managerBackend.MakeBuild()
@@ -101,12 +92,12 @@ func main(){
     */
     
     
+    
     /*
 
         Zrobić obsługę parametrów
 
     gopath /home/grzegorz/GOPATH
-    appuser
     */
     
     /*
@@ -126,7 +117,7 @@ func main(){
                             //build w kontekście tego katalogu będzie odpalany
     
     
-    backend1, errCreate1 := managerBackend.New("build_20150804141001_381cd491cd49208d4a667912ef55fb78ab8469b1")       //127.0.0.1
+    backend1, errCreate1 := managerBackend.New("build_20150804140526_381cd491cd49208d4a667912ef55fb78ab8469b1")       //127.0.0.1
     
     
     if errCreate1 != nil {
@@ -155,7 +146,7 @@ func main(){
     fmt.Println("przełączam backend")
     
     
-    backend2, errBackend2 := managerBackend.New("build_20150803111303_3128586f693bb8005253ae17eb0d95ea25573b94")
+    backend2, errBackend2 := managerBackend.New("build_20150805153050_381cd491cd49208d4a667912ef55fb78ab8469b1")
     
     if errBackend2 != nil {
         

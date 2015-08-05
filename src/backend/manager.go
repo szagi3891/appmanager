@@ -7,12 +7,14 @@ import (
     "strconv"
     "bytes"
     "time"
-    "fmt"
+    //"fmt"
+    userModule "os/user"
+    "syscall"
     "../errorStack"
 )
 
 
-func Init(gocmd, pwd, buildDir, appMain string, portStart, portEnd int) *Manager {
+func Init(gocmd, pwd, buildDir, appMain, appUser string, portStart, portEnd int) (*Manager, *errorStack.Error) {
     
     ports := map[int]*Backend{}
     
@@ -20,14 +22,48 @@ func Init(gocmd, pwd, buildDir, appMain string, portStart, portEnd int) *Manager
         ports[i] = nil
     }
     
+    uid, gid, errLookup := lookupUser(appUser)
+    
+    if errLookup != nil {
+        return nil, errLookup
+    }
+    
     return &Manager{
         gocmd    : gocmd,
         pwd      : pwd,
         buildDir : buildDir,
         appMain  : appMain,
+        appUser  : appUser,
         ports    : ports,
-    }
+        uid      : uid,
+        gid      : gid,
+    }, nil
 }
+
+
+func lookupUser(appUser string) (uint32, uint32, *errorStack.Error) {
+    
+    userDetail, errLookup := userModule.Lookup(appUser)
+    
+    if errLookup != nil {
+        return 0, 0, errorStack.From(errLookup)
+    }
+    
+    uid, errUid := strconv.ParseInt(userDetail.Uid, 10, 64)
+    
+    if errUid != nil {
+        return 0, 0, errorStack.From(errUid)
+    }
+    
+    gid, errGid := strconv.ParseInt(userDetail.Gid, 10, 64)
+    
+    if errGid != nil {
+        return 0, 0, errorStack.From(errGid)
+    }
+    
+    return uint32(uid), uint32(gid), nil
+}
+    
 
 
 type Manager struct {
@@ -36,7 +72,10 @@ type Manager struct {
     pwd      string
     buildDir string
     appMain  string
+    appUser  string
     ports    map[int]*Backend
+    uid      uint32
+    gid      uint32
 }
 
 
@@ -107,9 +146,8 @@ func (self *Manager) MakeBuild() *errorStack.Error {
     
     buildName := "build_" + frm(year, 4) + frm(int(montch), 2) + frm(day, 2) + frm(hour, 2) + frm(minute, 2) + frm(second, 2) + "_" + repoSha1
     
+    //fmt.Println(buildName)
     
-    fmt.Println(buildName)
-
     //go build -o ../appmanager_build/nowy ../wolnemedia/src/main.go
     //go build ./src/main.go
     
@@ -160,6 +198,9 @@ func (self *Manager) New(buildName string) (*Backend, *errorStack.Error) {
     cmd := exec.Command(buildPath, strconv.FormatInt(int64(newBackend.port), 10))
     
     cmd.Dir = self.pwd
+    
+    cmd.SysProcAttr = &syscall.SysProcAttr{}
+    cmd.SysProcAttr.Credential = &syscall.Credential{Uid: self.uid, Gid: self.gid}
     
     out1 := outData{}
     out2 := outData{}

@@ -19,6 +19,7 @@ type File struct {
     portTo   int
     goCmd    string
     appMain  string
+    appUser  string
 }
 
 
@@ -105,6 +106,17 @@ func Parse(path string) (*File, *errorStack.Error) {
     
     
     
+    appUser, errAppUser := getFromMap(&mapConfig, "appuser", pathBase)
+    
+    if errAppUser != nil {
+        return nil, errAppUser
+    }
+    
+    configFile.appUser = appUser
+    
+    
+    
+    
     fmt.Println(configFile)
     
     /*
@@ -125,6 +137,11 @@ func Parse(path string) (*File, *errorStack.Error) {
     return &configFile, nil
 }
 
+
+func (self *File) GetAppUser() string {
+    
+    return self.appUser
+}
 
 func (self *File) GetPortFrom() int {
     
