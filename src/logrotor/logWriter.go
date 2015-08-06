@@ -1,6 +1,7 @@
 package logrotor
 
 import (
+    "os"
     "fmt"
 )
 
@@ -9,7 +10,7 @@ func newLogWriter(pathFile string) *LogWriter {
     pipe    := make(chan *[]byte)
     isClose := make(chan bool)
     
-    go runLogPipe(pipe, isClose, pathFile)
+    go runLogGroup(pipe, isClose, pathFile)
     
     return &LogWriter{
         pipe    : pipe,
@@ -24,6 +25,7 @@ type LogWriter struct {
 
 func (self *LogWriter) Write(p []byte) (n int, err error) {
     
+    //fmt.Println(string(p))
     self.pipe <- &p
     return len(p), nil
 }
@@ -31,50 +33,137 @@ func (self *LogWriter) Write(p []byte) (n int, err error) {
 
 func (self *LogWriter) Stop() {
     
-    close(self.pipe)
+    self.pipe <- nil
     
             //blokująco trzeba wszystko z tym logiem związane pozamykać
     <- self.isClose
 }
 
+//func createCondision(time 
 
-func runLogPipe(pipe chan *[]byte, isClose chan bool, pathFile string) {
+/*
+    I  stopień - grupujemy dane co ileś tam bajtów, po to aby niepotrzebnie nie męczyć dysku ciągłymi zapisami
+    II stopień - otrzymaną paczkę od razu zapisujemy do pliku
+*/
+
+func runLogGroup(pipe chan *[]byte, isClose chan bool, pathFile string) {
     
-    buf       := []*[]byte{}
-    size      := 0
-    pipeWrite := make(chan []*[]byte)
+    buf           := []*[]byte{}
+    size          := 0
     
-    go runWritePipe(pipeWrite, isClose, pathFile)
+    sendToFile    := make(chan []*[]byte)
+    isCloseWriter := make(chan bool)
     
-    for newData := range pipe {
+    
+    go SaveData(pathFile, sendToFile, isCloseWriter)
+    
+    
+    reciveData := func(newData *[]byte) bool {
+
+        if newData == nil {
+            
+            sendToFile <- buf
+            sendToFile <- nil       //zakończ działanie
+
+            close(isClose)
+            return true
+
+        }
         
         buf = append(buf, newData)
         size = size + len(*newData)
-        
-        if size > 1024 {
-            
-            pipeWrite <- buf
-            
-            buf  = []*[]byte{}
-            size = 0
-        }
+        return false
     }
     
-    pipeWrite <- buf
-    close(pipeWrite)
+    
+    for {
+        
+        if size > 5000 {
+            
+            select {
+
+                case newData := <- pipe : {
+                    
+                    if reciveData(newData) {
+                        return
+                    }
+                }
+
+                case sendToFile <- buf : {
+
+                    buf  = []*[]byte{}
+                    size = 0
+                }
+            }
+        
+        } else {
+            
+            newData := <- pipe
+            
+            if reciveData(newData) {
+                return
+            }
+        }
+    }
 }
 
 
-func runWritePipe(pipeWrite chan []*[]byte, isClose chan bool, pathFile string) {
+func SaveData(pathFile string, saveIn chan []*[]byte, isCloseWriter chan bool) {
     
-    for newPack := range pipeWrite {
-        
-        fmt.Println("nowa paczka danych: ", newPack, len(newPack))
+    
+    file, errCreate := os.OpenFile(pathFile, os.O_APPEND | os.O_CREATE | os.O_WRONLY, 0600)
+    
+    if errCreate != nil {
+        fmt.Println(errCreate)
+        panic("DAsdAS")
     }
     
     
-        //daj sygnał światu że zakończyliśmy swoją egzystencję i żeby o nas pamietał
-    close(isClose)
+    for {
+        
+        newData := <- saveIn
+
+        if newData == nil {
+            
+            file.Close()
+            close(isCloseWriter)
+
+            return
+        }
+        
+        
+        for _, chankData := range newData {
+            
+            n, err := file.Write(*chankData)
+            fmt.Println(string(*chankData))
+            if err != nil {
+                
+                fmt.Println(err)
+                panic("dasd")
+            }
+            
+            if n != len(*chankData) {
+                
+                panic("nieprawidłowa ilość zapisanych znaków do pliku")
+            }
+        }
+        
+        
+
+        //jeśli rotowanie
+
+            //tak ->
+            //zamknij plik
+            //zgzipuj nową zawartość
+            //usuń poprzednią wersję
+            //otwórz nowy dyskryptor
+            //zgłóś gotowość że zadanie wykonane
+            //saveResult <- true
+
+            //nie ->
+            //zgłość gotowość że zadanie wykonane
+            //saveResult <- true
+    }
 }
 
 

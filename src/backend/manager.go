@@ -198,8 +198,8 @@ func (self *Manager) New(buildName string) (*Backend, *errorStack.Error) {
     cmd.SysProcAttr = &syscall.SysProcAttr{}
     cmd.SysProcAttr.Credential = &syscall.Credential{Uid: self.uid, Gid: self.gid}
     
-    cmd.Stdout = newBackend.stdout      //self.logrotor.New(buildName, true)
-    cmd.Stderr = newBackend.stderr      //self.logrotor.New(buildName, false)
+    cmd.Stdout = newBackend.stdout
+    cmd.Stderr = newBackend.stderr
     
 	err := cmd.Start()
     
