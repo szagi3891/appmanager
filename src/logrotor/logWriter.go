@@ -1,8 +1,10 @@
 package logrotor
 
 import (
-    "os"
     "fmt"
+    "os"
+    "../errorStack"
+    "../applog"
 )
 
 func newLogWriter(pathFile string) *LogWriter {
@@ -23,10 +25,39 @@ type LogWriter struct {
     isClose chan bool
 }
 
+func copyArr(src *[]byte) *[]byte {
+    
+    cop := []byte{}
+    
+    for _, char := range *src {
+        cop = append(cop, char)
+    }
+    
+    return &cop
+}
+
+func (self *LogWriter) WriteString(p string) () {
+    
+    //fmt.Println(p)
+    
+    p2 := []byte(p)
+    
+    p3 := copyArr(&p2)
+    
+    self.pipe <- p3
+}
+
 func (self *LogWriter) Write(p []byte) (n int, err error) {
     
     //fmt.Println(string(p))
-    self.pipe <- &p
+    
+    
+    p3 := copyArr(&p)
+    
+    
+    self.pipe <- p3
+    
+    
     return len(p), nil
 }
 
@@ -110,22 +141,34 @@ func runLogGroup(pipe chan *[]byte, isClose chan bool, pathFile string) {
 
 func SaveData(pathFile string, saveIn chan []*[]byte, isCloseWriter chan bool) {
     
-    
-    file, errCreate := os.OpenFile(pathFile, os.O_APPEND | os.O_CREATE | os.O_WRONLY, 0600)
-    
-    if errCreate != nil {
-        fmt.Println(errCreate)
-        panic("DAsdAS")
-    }
+    var file *os.File
     
     
     for {
         
         newData := <- saveIn
-
+        
+        
+        if file == nil {
+            
+            fileNew, errCreate := os.OpenFile(pathFile, os.O_APPEND | os.O_CREATE | os.O_WRONLY, 0600)
+            
+            if errCreate != nil {
+                
+                applog.WriteErrLn(errorStack.From(errCreate).String())
+                return
+            }
+            
+            file = fileNew
+        }
+        
+        
         if newData == nil {
             
-            file.Close()
+            if file != nil {
+                file.Close()
+            }
+            
             close(isCloseWriter)
 
             return
@@ -134,17 +177,18 @@ func SaveData(pathFile string, saveIn chan []*[]byte, isCloseWriter chan bool) {
         
         for _, chankData := range newData {
             
-            n, err := file.Write(*chankData)
             fmt.Println(string(*chankData))
+            n, err := file.Write(*chankData)
+            
             if err != nil {
                 
-                fmt.Println(err)
-                panic("dasd")
+                applog.WriteErrLn(errorStack.From(err).String())
+                continue
             }
             
             if n != len(*chankData) {
                 
-                panic("nieprawidłowa ilość zapisanych znaków do pliku")
+                applog.WriteErrLn(errorStack.Create("nieprawidłowa ilość zapisanych znaków do pliku").String())
             }
         }
         
@@ -165,6 +209,7 @@ func SaveData(pathFile string, saveIn chan []*[]byte, isCloseWriter chan bool) {
             //saveResult <- true
     }
 }
+
 
 
 //type logPipe struct {

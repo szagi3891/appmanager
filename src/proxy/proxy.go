@@ -3,9 +3,9 @@ package proxy
 
 import (
     "net"
-    "fmt"
     "strconv"
     "../handleConn"
+    "../errorStack"
     backendModule "../backend"
     logrotorModule "../logrotor"
 )
@@ -13,22 +13,14 @@ import (
 
 type Proxy struct {
     
-    listener *net.TCPListener
-    logCh    chan *string
-    backend  *backendModule.Backend
+    appStderr *logrotorModule.LogWriter
+    listener  *net.TCPListener
+    backend   *backendModule.Backend
 }
 
 
-func New(mainPort int, logrotor *logrotorModule.Manager, backend *backendModule.Backend) (*Proxy, error) {
+func New(appStderr *logrotorModule.LogWriter, mainPort int, logrotor *logrotorModule.Manager, backend *backendModule.Backend) (*Proxy, error) {
     
-    
-    //TODO
-        //trzeba będzie utworzyć dwa strumienie na logi z obiektu proxy
-    
-    /*
-    self.logrotor.New("appmanager", true)
-    self.logrotor.New("appmanager", false)
-    */
     
     addr := "127.0.0.1:" + strconv.FormatInt(int64(mainPort), 10)
     
@@ -46,13 +38,10 @@ func New(mainPort int, logrotor *logrotorModule.Manager, backend *backendModule.
 	}
     
     
-    logCh := make(chan *string)
-    
-    
     proxy := &Proxy{
-        listener : listener,
-        logCh    : logCh,
-        backend  : backend,
+        appStderr : appStderr,
+        listener  : listener,
+        backend   : backend,
     }
     
     proxy.start()
@@ -67,18 +56,6 @@ func (self *Proxy) Switch(backend *backendModule.Backend) {
 }
 
 
-func printLog(logCh chan *string) {
-    
-    go func(){
-        
-        for logItem := range logCh {
-            
-            fmt.Println(logItem)
-        }
-        
-    }()
-}
-
 
 func (self *Proxy) start() {
     
@@ -90,8 +67,7 @@ func (self *Proxy) start() {
 
             if errAccept != nil {
                 
-                errStr := "err: " + errAccept.Error()
-                self.logCh <- &errStr
+                self.appStderr.WriteString(errorStack.From(errAccept).String())
                 
             } else {
                 
@@ -99,11 +75,11 @@ func (self *Proxy) start() {
                 
                 if errConnectect != nil {
                     
-                    errStr := "err: " + errConnectect.Error()
-                    self.logCh <- &errStr
+                    self.appStderr.WriteString(errorStack.From(errConnectect).String())
                     
                 } else {
                     
+                    //TODO
                     //trzeba jakoś logować prawidłowe połączenia
                 }
             }

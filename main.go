@@ -7,7 +7,7 @@ import (
     "fmt"
     proxyModule   "./src/proxy"
     backendModule "./src/backend"
-    "time"
+    //"time"
     configModule "./src/config"
     logrotorModule "./src/logrotor"
 )
@@ -78,50 +78,23 @@ func main(){
     
     
     if errInitManager != nil {
-        
+            
         fmt.Println(errInitManager)
         os.Exit(1)
     }
     
     
-    //fmt.Println(config.GetRotatesize(), config.GetRotatetime())
-    //os.Exit(1)
-    
     /*
     errMake := managerBackend.MakeBuild()
-    
     fmt.Println("errMake:", errMake)
-    
     return
     */
     
     
+    //TODO - zrobić pingowanie w nowy beckend, gotowość dopiero ma zgłosić jeśli będzie odpowiadał na zadanym porcie
     
+    //TODO - zrobić rotowanie i gzipowanie logów
     
-    /*
-        format logów ...
-        
-        build_czasutworzenia_sha1
-
-        build_czasutworzenia_sha1_czasuruchomienia.out
-        build_czasutworzenia_sha1_czasuruchomienia.err
-
-        build_czasutworzenia_sha1_czasuruchomienia.out.gz
-
-        appmanager_czasuruchomienia.out
-        appmanager_czasuruchomienia.err
-    */
-    
-    
-    /*
-        nowy proces backendowy
-            inicjuje dwa rotatory w ramach strumieni wyjściowych z procesu
-        przy zabijaniu procesu trzeba wysłać sygnały do tych dwóch obiektów odnośnie tego że mają pozamykać ładnie
-        pliki z logami na których operowały ...
-        
-        przy zrotowaniu pliku
-            odpallić nową gorutinę która będzie kompresowałą stary plik i zrobi z niego gzip-a
-    */
     
     /*
 
@@ -129,7 +102,7 @@ func main(){
         stare pliki z logami będą kasowane automatycznie żeby nie zapchać dysku
     */
     
-    backend1, errCreate1 := managerBackend.New("build_20150804140526_381cd491cd49208d4a667912ef55fb78ab8469b1")
+    backend1, errCreate1 := managerBackend.New("build_20150806232318_b82180a227005c7db9d49f054970c5d0dc8df7d1")
     
     
     if errCreate1 != nil {
@@ -140,7 +113,7 @@ func main(){
     
     
     
-    proxy, errStart := proxyModule.New(config.GetPortMain(), logrotor, backend1)
+    proxy, errStart := proxyModule.New(appStderr, config.GetPortMain(), logrotor, backend1)
     
     if errStart != nil {
         panic(errStart)
@@ -150,15 +123,12 @@ func main(){
     fmt.Println("start proxy: ", proxy)
     
     
-    
+    /*
     time.Sleep(time.Second * 10)
-    
-    
     
     fmt.Println("przełączam backend")
     
-    
-    backend2, errBackend2 := managerBackend.New("build_20150805153050_381cd491cd49208d4a667912ef55fb78ab8469b1")
+    backend2, errBackend2 := managerBackend.New("build_20150806221324_f1c4c02114226c90a4a202dcbeec65366970fb55")
     
     if errBackend2 != nil {
         
@@ -166,9 +136,8 @@ func main(){
         os.Exit(1)
     }
     
-    
     proxy.Switch(backend2)
-    
+    */
     
     
     

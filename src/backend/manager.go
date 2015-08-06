@@ -6,12 +6,12 @@ import (
     "sync"
     "strconv"
     "bytes"
-    //"fmt"
     userModule "os/user"
     "syscall"
     "../errorStack"
     logrotorModule "../logrotor"
     utils "../utils"
+    "fmt"
 )
 
 
@@ -129,6 +129,7 @@ func (self *Manager) MakeBuild() *errorStack.Error {
     buildName := "build_" + utils.GetCurrentTimeName()  + "_" + repoSha1
     
     
+    //cmd := exec.Command(self.gocmd, "build", "-race", "-o", self.buildDir + "/" + buildName, self.appMain)
     cmd := exec.Command(self.gocmd, "build", "-o", self.buildDir + "/" + buildName, self.appMain)
     
     cmd.Dir = self.pwd
@@ -142,7 +143,10 @@ func (self *Manager) MakeBuild() *errorStack.Error {
     
 	err := cmd.Run()
     
-    panic("TODO - wyniki działania programu z bufora trzeba przepchnąć do loga")
+    fmt.Println(bufOut.String())
+    fmt.Println(bufErr.String())
+    
+    //panic("TODO - wyniki działania programu z bufora trzeba przepchnąć do loga")
     
     if err != nil {
         return errorStack.From(err)

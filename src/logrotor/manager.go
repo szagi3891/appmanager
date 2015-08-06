@@ -1,7 +1,6 @@
 package logrotor
 
 import (
-    //"fmt"
     "../errorStack"
     "../utils"
 )
