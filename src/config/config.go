@@ -13,16 +13,18 @@ import (
 
 
 type File struct {
-    appDir   string
-    buildDir string
-    logDir   string
-    portMain int
-    portFrom int
-    portTo   int
-    goCmd    string
-    appMain  string
-    appUser  string
-    gopath   string
+    appDir     string
+    buildDir   string
+    logDir     string
+    portMain   int
+    portFrom   int
+    portTo     int
+    goCmd      string
+    appMain    string
+    appUser    string
+    gopath     string
+    rotatesize int
+    rotatetime int
 }
 
 
@@ -110,6 +112,29 @@ func Parse(path string) (*File, *errorStack.Error) {
     configFile.portTo = portTo
     
     
+ 
+    
+    rotatesize, errRotatesize := getInt(&mapConfig, "rotatesize")
+    
+    if errRotatesize != nil {
+        return nil, errRotatesize
+    }
+    
+    configFile.rotatesize = rotatesize
+    
+    
+    rotatetime, errRotatetime := getInt(&mapConfig, "rotatetime")
+    
+    if errRotatetime != nil {
+        return nil, errRotatetime
+    }
+    
+    configFile.rotatetime = rotatetime
+    
+    
+    
+    
+    
     goCmd, errGoCmd := getFromMap(&mapConfig, "gocmd", pathBase)
     
     if errGoCmd != nil {
@@ -146,7 +171,7 @@ func Parse(path string) (*File, *errorStack.Error) {
     }
     
     configFile.gopath = gopath
-    
+   
     
     
     
@@ -171,6 +196,15 @@ func checkDirectory(path string) *errorStack.Error {
     return nil
 }
 
+func (self *File) GetRotatesize() int {
+    
+    return self.rotatesize
+}
+    
+func (self *File) GetRotatetime() int {
+    
+    return self.rotatetime
+}
 
 func (self *File) GetPortMain() int {
     return self.portMain
@@ -304,11 +338,21 @@ func convertToMap(lines *[]string) (map[string]string, *errorStack.Error) {
 
 func parseLine(line string) (string, string, bool, *errorStack.Error) {
     
-    if line[0] == "#"[0] {
-        return "", "", false, nil
+    indexHash := strings.Index(line, "#")
+    
+    lineNoHash := line
+    
+    if indexHash >= 0 {
+        lineNoHash = lineNoHash[0:indexHash]
     }
     
-    lineTrim := strings.TrimSpace(line)
+    
+    lineTrim := strings.TrimSpace(lineNoHash)
+    
+    
+    if lineTrim == "" {
+        return "", "", false, nil
+    }
     
     index := strings.Index(lineTrim, ":")
     

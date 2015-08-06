@@ -11,10 +11,11 @@ import (
     userModule "os/user"
     "syscall"
     "../errorStack"
+    logrotorModule "../logrotor"
 )
 
 
-func Init(gocmd, pwd, buildDir, appMain, appUser, gopath string, portStart, portEnd int) (*Manager, *errorStack.Error) {
+func Init(logrotor *logrotorModule.Manager, gocmd, pwd, buildDir, appMain, appUser, gopath string, portStart, portEnd int) (*Manager, *errorStack.Error) {
     
     ports := map[int]*Backend{}
     
@@ -29,6 +30,7 @@ func Init(gocmd, pwd, buildDir, appMain, appUser, gopath string, portStart, port
     }
     
     return &Manager{
+        logrotor : logrotor,
         gocmd    : gocmd,
         pwd      : pwd,
         buildDir : buildDir,
@@ -68,6 +70,7 @@ func lookupUser(appUser string) (uint32, uint32, *errorStack.Error) {
 
 
 type Manager struct {
+    logrotor *logrotorModule.Manager
     gocmd    string
     mutex    sync.Mutex
     pwd      string

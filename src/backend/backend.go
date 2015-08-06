@@ -30,7 +30,12 @@ func (self *Backend) checkStrop() {
             
             fmt.Println("zlecam morderstwo ...")
             
-            self.process.Kill()
+            errKill := self.process.Kill()
+            
+            if errKill != nil {
+                fmt.Println(errKill)
+            }
+            
             self.process = nil
         }
     }

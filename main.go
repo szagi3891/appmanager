@@ -9,6 +9,7 @@ import (
     backendModule "./src/backend"
     "time"
     configModule "./src/config"
+    logrotorModule "./src/logrotor"
 )
 
 
@@ -56,7 +57,17 @@ func main(){
     //lsof -i - coś podobnego
     
     
-    managerBackend, errInitManager := backendModule.Init(config.GetGoCmd(), config.GetAppDir(), config.GetBuildDir(), config.GetAppMain(), config.GetAppUser(), config.GetGopath(), config.GetPortFrom(), config.GetPortTo())
+    logrotor, errLogrotor := logrotorModule.Init(config.GetLogDir(), config.GetRotatesize(), config.GetRotatetime())
+    
+    if errLogrotor != nil {
+        
+        fmt.Println(errLogrotor)
+        os.Exit(1)
+    }
+    
+    
+    
+    managerBackend, errInitManager := backendModule.Init(logrotor, config.GetGoCmd(), config.GetAppDir(), config.GetBuildDir(), config.GetAppMain(), config.GetAppUser(), config.GetGopath(), config.GetPortFrom(), config.GetPortTo())
     
     
     if errInitManager != nil {
@@ -66,6 +77,8 @@ func main(){
     }
     
     
+    //fmt.Println(config.GetRotatesize(), config.GetRotatetime())
+    //os.Exit(1)
     
     /*
     errMake := managerBackend.MakeBuild()
@@ -76,21 +89,7 @@ func main(){
     */
     
     
-    
     /*
-        lista
-
-            nie można przełączyć builda, jeśli trwa aktualnie przełączanie nowej wersji
-            przy uruchomionej aplikacji pokazywać ile aktualnie trwa połączeń
-
-            ewentualnie można zrobić strumieniowanie danych na temat ilości połączeń przełączanych z jednej wersji aplikacji na drugą
-    */
-    
-    /*
-        todo - zrobić obsługę parametrów dotyczących rotowania logów
-        rotatesize : granica w bajtach po której przekroczeniu rozpoczynamy nowy plik
-        rotatetime : granica w sekundach po przekroczeniu której rozpoczynamy nowy plik
-        
         nowy proces backendowy
             inicjuje dwa rotatory w ramach strumieni wyjściowych z procesu
         przy zabijaniu procesu trzeba wysłać sygnały do tych dwóch obiektów odnośnie tego że mają pozamykać ładnie
@@ -98,11 +97,13 @@ func main(){
         
         przy zrotowaniu pliku
             odpallić nową gorutinę która będzie kompresowałą stary plik i zrobi z niego gzip-a
-    
     */
-                            //build w kontekście tego katalogu będzie odpalany
     
-    
+    /*
+
+        zrobić obsługę zmiennej : rotatetotalsize
+        stare pliki z logami będą kasowane automatycznie żeby nie zapchać dysku
+    */
     
     backend1, errCreate1 := managerBackend.New("build_20150804140526_381cd491cd49208d4a667912ef55fb78ab8469b1")
     
@@ -115,7 +116,7 @@ func main(){
     
     
     
-    proxy, errStart := proxyModule.New(config.GetPortMain(), config.GetLogDir(), backend1)
+    proxy, errStart := proxyModule.New(config.GetPortMain(), logrotor, backend1)
     
     if errStart != nil {
         panic(errStart)
@@ -157,15 +158,4 @@ func main(){
     
     //TODO - nowy byt, struktura reprezentująca listę buildów ...
     
-    
-    /*
-        build_3_20150801_143212     - numer kolejny i data utworzenia
-        
-
-        makeBuild
-            funkcja robi nowego builda i zwraca jego nazwę
-        
-        proxy.runBuild("nazwa buildu", port)
-            nazwa buildu, numer portu
-    */
 }

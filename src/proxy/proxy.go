@@ -7,19 +7,22 @@ import (
     "strconv"
     "../handleConn"
     backendModule "../backend"
+    logrotorModule "../logrotor"
 )
 
 
 type Proxy struct {
     
-    log      string
     listener *net.TCPListener
     logCh    chan *string
     backend  *backendModule.Backend
 }
 
 
-func New(mainPort int, log string, backend *backendModule.Backend) (*Proxy, error) {
+func New(mainPort int, logrotor *logrotorModule.Manager, backend *backendModule.Backend) (*Proxy, error) {
+    
+    //TODO
+        //trzeba będzie utworzyć dwa strumienie na logi z obiektu proxy
     
     addr := "127.0.0.1:" + strconv.FormatInt(int64(mainPort), 10)
     
@@ -41,7 +44,6 @@ func New(mainPort int, log string, backend *backendModule.Backend) (*Proxy, erro
     
     
     proxy := &Proxy{
-        log      : log,
         listener : listener,
         logCh    : logCh,
         backend  : backend,
@@ -55,11 +57,7 @@ func New(mainPort int, log string, backend *backendModule.Backend) (*Proxy, erro
 
 func (self *Proxy) Switch(backend *backendModule.Backend) {
     
-    old := self.backend
-    
     self.backend = backend
-    
-    old.Stop()
 }
 
 
