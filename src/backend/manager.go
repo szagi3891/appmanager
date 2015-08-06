@@ -157,11 +157,8 @@ func (self *Manager) MakeBuild() *errorStack.Error {
     cmd.Dir = self.pwd
     cmd.Env = []string{"GOPATH=" + self.gopath}
     
-    out1 := outData{}
-    out2 := outData{}
-    
-    cmd.Stdout = &out1
-    cmd.Stderr = &out2
+    cmd.Stdout = self.logrotor.New("appmanager", true)
+    cmd.Stderr = self.logrotor.New("appmanager", false)
     
 	err := cmd.Run()
     
@@ -201,14 +198,12 @@ func (self *Manager) New(buildName string) (*Backend, *errorStack.Error) {
     
     cmd.Dir = self.pwd
     
+                                                    //uruchomienie na koncie określonego użytkownika
     cmd.SysProcAttr = &syscall.SysProcAttr{}
     cmd.SysProcAttr.Credential = &syscall.Credential{Uid: self.uid, Gid: self.gid}
     
-    out1 := outData{}
-    out2 := outData{}
-    
-    cmd.Stdout = &out1
-    cmd.Stderr = &out2
+    cmd.Stdout = self.logrotor.New(buildName, true)
+    cmd.Stderr = self.logrotor.New(buildName, false)
     
 	err := cmd.Start()
     

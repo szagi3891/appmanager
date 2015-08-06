@@ -89,6 +89,23 @@ func main(){
     */
     
     
+    
+    
+    /*
+        format logów ...
+        
+        build_czasutworzenia_sha1
+
+        build_czasutworzenia_sha1_czasuruchomienia.out
+        build_czasutworzenia_sha1_czasuruchomienia.err
+
+        build_czasutworzenia_sha1_czasuruchomienia.out.gz
+
+        appmanager_czasuruchomienia.out
+        appmanager_czasuruchomienia.err
+    */
+    
+    
     /*
         nowy proces backendowy
             inicjuje dwa rotatory w ramach strumieni wyjściowych z procesu

@@ -1,6 +1,7 @@
 package logrotor
 
 import (
+    "fmt"
     "../errorStack"
 )
 
@@ -27,8 +28,12 @@ type Manager struct {
 
 
 
-func (self *Manager) New(name string) *LogWriter {
+func (self *Manager) New(name string, stdout bool) *LogWriter {
     
+    //stdout true  : .out
+    //stdout false : .err
+    
+    panic("TODO - trzeba osbłużyć tworzenie nowej rurki zbierającej dane i zapisującej dane do pliku z logiem")
     return &LogWriter{
     }
 }
@@ -37,6 +42,17 @@ func (self *Manager) New(name string) *LogWriter {
 type LogWriter struct {
     
 }
+
+
+func (self *LogWriter) Write(p []byte) (n int, err error) {
+    
+    fmt.Println("logwriter", string(p))
+    return len(p), nil
+}
+
+
+//Read(p []byte) (n int, err error)
+//Write(p []byte) (n int, err error)
 
 
 
