@@ -21,8 +21,14 @@ type Proxy struct {
 
 func New(mainPort int, logrotor *logrotorModule.Manager, backend *backendModule.Backend) (*Proxy, error) {
     
+    
     //TODO
         //trzeba będzie utworzyć dwa strumienie na logi z obiektu proxy
+    
+    /*
+    self.logrotor.New("appmanager", true)
+    self.logrotor.New("appmanager", false)
+    */
     
     addr := "127.0.0.1:" + strconv.FormatInt(int64(mainPort), 10)
     

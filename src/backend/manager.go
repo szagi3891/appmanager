@@ -157,10 +157,15 @@ func (self *Manager) MakeBuild() *errorStack.Error {
     cmd.Dir = self.pwd
     cmd.Env = []string{"GOPATH=" + self.gopath}
     
-    cmd.Stdout = self.logrotor.New("appmanager", true)
-    cmd.Stderr = self.logrotor.New("appmanager", false)
+    var bufOut bytes.Buffer
+    var bufErr bytes.Buffer
+    
+	cmd.Stdout = &bufOut
+	cmd.Stderr = &bufErr
     
 	err := cmd.Run()
+    
+    panic("TODO - wyniki działania programu z bufora trzeba przepchnąć do loga")
     
     if err != nil {
         return errorStack.From(err)
