@@ -33,7 +33,6 @@ func interruptNotify() {
 
 func main(){
     
-    
     if len(os.Args) != 2 {
         fmt.Println("Spodziewano się dokładnie dwóch parametrów")
         os.Exit(1)
@@ -52,6 +51,7 @@ func main(){
     }
     
     
+    
     //listowanie wszystkich aplikacji słuchających na porcie
     //netstat -tulpn
     //lsof -i - coś podobnego
@@ -66,8 +66,15 @@ func main(){
     }
     
     
+    //TODO - Trzeba zrobić jakaś strukturkę zbierającą te dwie struktury
     
-    managerBackend, errInitManager := backendModule.Init(logrotor, config.GetGoCmd(), config.GetAppDir(), config.GetBuildDir(), config.GetAppMain(), config.GetAppUser(), config.GetGopath(), config.GetPortFrom(), config.GetPortTo())
+                                                //logi aplikacji
+    appStdout := logrotor.New("appmanager", true)
+    appStderr := logrotor.New("appmanager", false)
+    
+    
+    
+    managerBackend, errInitManager := backendModule.Init(logrotor, appStdout, appStderr, config.GetGoCmd(), config.GetAppDir(), config.GetBuildDir(), config.GetAppMain(), config.GetAppUser(), config.GetGopath(), config.GetPortFrom(), config.GetPortTo())
     
     
     if errInitManager != nil {

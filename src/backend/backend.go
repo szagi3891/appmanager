@@ -6,6 +6,7 @@ import (
     "sync"
     "fmt"
     "strconv"
+    logrotorModule "../logrotor"
 )
 
 
@@ -16,6 +17,9 @@ type Backend struct {
     mutex   sync.Mutex
     active  int
     process *os.Process
+    isClose chan bool
+    stdout  *logrotorModule.LogWriter
+    stderr  *logrotorModule.LogWriter
 }
 
 
@@ -27,6 +31,8 @@ func (self *Backend) checkStrop() {
     if self.stop == true && self.active == 0 {
         
         if self.process != nil {
+            
+            close(self.isClose)
             
             fmt.Println("zlecam morderstwo ...")
             
@@ -49,6 +55,12 @@ func (self *Backend) Stop() {
     self.mutex.Unlock()
     
     self.checkStrop()
+    
+                        //czekaj aż wszystkie powiązane procesy z tym procesem się zakończą
+    <- self.isClose
+    
+    self.stdout.Stop()
+    self.stderr.Stop()
 }
 
 

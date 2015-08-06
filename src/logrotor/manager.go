@@ -1,10 +1,10 @@
 package logrotor
 
 import (
-    "fmt"
+    //"fmt"
     "../errorStack"
+    "../utils"
 )
-
 
 func Init(logDir string, rotatesize, rotatetime int) (*Manager, *errorStack.Error) {
     
@@ -27,37 +27,16 @@ type Manager struct {
 }
 
 
-
 func (self *Manager) New(name string, stdout bool) *LogWriter {
     
     //stdout true  : .out
     //stdout false : .err
     
-    panic("TODO - trzeba osbłużyć tworzenie nowej rurki zbierającej dane i zapisującej dane do pliku z logiem")
-    return &LogWriter{
+    ext := "err"
+    
+    if stdout {
+        ext = "out"
     }
-}
-
-
-type LogWriter struct {
     
+    return newLogWriter(self.logDir + "/" + name + "_" + utils.GetCurrentTimeName() + "." + ext)
 }
-
-
-func (self *LogWriter) Write(p []byte) (n int, err error) {
-    
-    fmt.Println("logwriter", string(p))
-    return len(p), nil
-}
-
-
-//Read(p []byte) (n int, err error)
-//Write(p []byte) (n int, err error)
-
-
-
-type logPipe struct {
-    timestart int           //czas w którym trafił pierwszy log do tego strumienia
-    size      int           //rozmiar danych które siedzą w tym pliku
-}
-

@@ -6,16 +6,16 @@ import (
     "sync"
     "strconv"
     "bytes"
-    "time"
     //"fmt"
     userModule "os/user"
     "syscall"
     "../errorStack"
     logrotorModule "../logrotor"
+    utils "../utils"
 )
 
 
-func Init(logrotor *logrotorModule.Manager, gocmd, pwd, buildDir, appMain, appUser, gopath string, portStart, portEnd int) (*Manager, *errorStack.Error) {
+func Init(logrotor *logrotorModule.Manager,  appStdout, appStderr *logrotorModule.LogWriter, gocmd, pwd, buildDir, appMain, appUser, gopath string, portStart, portEnd int) (*Manager, *errorStack.Error) {
     
     ports := map[int]*Backend{}
     
@@ -30,16 +30,18 @@ func Init(logrotor *logrotorModule.Manager, gocmd, pwd, buildDir, appMain, appUs
     }
     
     return &Manager{
-        logrotor : logrotor,
-        gocmd    : gocmd,
-        pwd      : pwd,
-        buildDir : buildDir,
-        appMain  : appMain,
-        appUser  : appUser,
-        ports    : ports,
-        uid      : uid,
-        gid      : gid,
-        gopath   : gopath,
+        logrotor  : logrotor,
+        appStdout : appStdout,
+        appStderr : appStderr,
+        gocmd     : gocmd,
+        pwd       : pwd,
+        buildDir  : buildDir,
+        appMain   : appMain,
+        appUser   : appUser,
+        ports     : ports,
+        uid       : uid,
+        gid       : gid,
+        gopath    : gopath,
     }, nil
 }
 
@@ -70,39 +72,21 @@ func lookupUser(appUser string) (uint32, uint32, *errorStack.Error) {
 
 
 type Manager struct {
-    logrotor *logrotorModule.Manager
-    gocmd    string
-    mutex    sync.Mutex
-    pwd      string
-    buildDir string
-    appMain  string
-    appUser  string
-    ports    map[int]*Backend
-    uid      uint32
-    gid      uint32
-    gopath   string
+    logrotor  *logrotorModule.Manager
+    appStdout *logrotorModule.LogWriter
+    appStderr *logrotorModule.LogWriter
+    gocmd     string
+    mutex     sync.Mutex
+    pwd       string
+    buildDir  string
+    appMain   string
+    appUser   string
+    ports     map[int]*Backend
+    uid       uint32
+    gid       uint32
+    gopath    string
 }
 
-
-func (self *Manager) createNewBackend() (*Backend, *errorStack.Error) {
-    
-    self.mutex.Lock()
-    self.mutex.Unlock()
-    
-    for portIndex, value := range self.ports {
-        
-        if value == nil {
-            
-            newBeckend := Backend{addr : "127.0.0.1", port : portIndex}
-            
-            self.ports[portIndex] = &newBeckend
-            
-            return &newBeckend, nil
-        }
-    }
-    
-    return nil, errorStack.Create("Error alocation ports")
-}
 
 
 func (self *Manager) getSha1Repo() (string, *errorStack.Error) {
@@ -142,14 +126,7 @@ func (self *Manager) MakeBuild() *errorStack.Error {
     }
     
     
-    current           := time.Now()
-    year, montch, day := current.Date()
-    hour              := current.Hour()
-    minute            := current.Minute()
-    second            := current.Second()
-    
-    
-    buildName := "build_" + frm(year, 4) + frm(int(montch), 2) + frm(day, 2) + frm(hour, 2) + frm(minute, 2) + frm(second, 2) + "_" + repoSha1
+    buildName := "build_" + utils.GetCurrentTimeName()  + "_" + repoSha1
     
     
     cmd := exec.Command(self.gocmd, "build", "-o", self.buildDir + "/" + buildName, self.appMain)
@@ -175,23 +152,37 @@ func (self *Manager) MakeBuild() *errorStack.Error {
 }
 
 
-func frm(liczba int, digit int) string {
+func (self *Manager) createNewBackend(buildName string) (*Backend, *errorStack.Error) {
     
-    out := strconv.FormatInt(int64(liczba), 10)
+    self.mutex.Lock()
+    self.mutex.Unlock()
     
-    for len(out) < digit {
-        out = "0" + out
+    for portIndex, value := range self.ports {
+        
+        if value == nil {
+            
+            newBeckend := Backend{
+                addr    : "127.0.0.1",
+                port    : portIndex,
+                isClose : make(chan bool),
+                stdout  : self.logrotor.New(buildName, true),
+                stderr  : self.logrotor.New(buildName, false),
+                
+            }
+            
+            self.ports[portIndex] = &newBeckend
+            
+            return &newBeckend, nil
+        }
     }
     
-    return out
+    return nil, errorStack.Create("Error alocation ports")
 }
-
 
 //uruchomienie konkretnego builda
 func (self *Manager) New(buildName string) (*Backend, *errorStack.Error) {
     
-    
-    newBackend, errCerate := self.createNewBackend()
+    newBackend, errCerate := self.createNewBackend(buildName)
     
     if errCerate != nil {
         return nil, errCerate
@@ -207,8 +198,8 @@ func (self *Manager) New(buildName string) (*Backend, *errorStack.Error) {
     cmd.SysProcAttr = &syscall.SysProcAttr{}
     cmd.SysProcAttr.Credential = &syscall.Credential{Uid: self.uid, Gid: self.gid}
     
-    cmd.Stdout = self.logrotor.New(buildName, true)
-    cmd.Stderr = self.logrotor.New(buildName, false)
+    cmd.Stdout = newBackend.stdout      //self.logrotor.New(buildName, true)
+    cmd.Stderr = newBackend.stderr      //self.logrotor.New(buildName, false)
     
 	err := cmd.Start()
     
