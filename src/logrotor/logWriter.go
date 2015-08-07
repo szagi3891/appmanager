@@ -170,14 +170,14 @@ func SaveData(pathFile string, saveIn chan []*[]byte, isCloseWriter chan bool) {
             }
             
             close(isCloseWriter)
-
+            
             return
         }
         
         
         for _, chankData := range newData {
             
-            fmt.Println(string(*chankData))
+            fmt.Print(string(*chankData))
             n, err := file.Write(*chankData)
             
             if err != nil {
