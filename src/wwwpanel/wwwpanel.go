@@ -34,16 +34,14 @@ func Start(port int64, appStderr *logrotorModule.LogWriter, manager *backendModu
         
         if urlmatch.IsIndex() {
             
-            _, errAppGet := manager.GetAppList()
+            listApp := manager.GetAppList()
             
-            if errAppGet != nil {
-                fmt.Println(errAppGet)
-                panic("TODO")
-            }
-            
+            //fmt.Println("listApp", listApp)
             //proxy.GetActiveBackend()
             
             //TODO - trzeba wyświetlić tą listę aplikacji
+            mainPort   := proxy.GetMainPort()
+            activePort := proxy.GetActive().Port()
             
             listBuild, errList := manager.GetListBuild()
             
@@ -68,13 +66,28 @@ func Start(port int64, appStderr *logrotorModule.LogWriter, manager *backendModu
             sort.Sort(sort.Reverse(sort.StringSlice(*listBuild)))
             
             
-            response := actionIndex.GetResponse(req, listBuild, lastCommitRepo, isAvailableNewCommit)
+            response := actionIndex.GetResponse(req, listApp, mainPort, activePort, listBuild, lastCommitRepo, isAvailableNewCommit)
             fmt.Fprint(out, response.String())
-        
-        
-        //Akcja przełączająca beckend - trzeba zrobić mutex
-        //przełączenie ma iść na konkretny numer portu oraz na konkretną nazwę builda
-        
+            
+            //Akcja przełączająca beckend - trzeba zrobić mutex
+            //przełączenie ma iść na konkretny numer portu oraz na konkretną nazwę builda
+            
+        } else if appName, _, isOk := urlmatch.MatchString("start"); isOk {
+
+            _, errStart := manager.New(appName)
+            
+            if errStart != nil {
+                
+                fmt.Println(errStart)
+                panic("TODO")
+            }
+            
+            layout, body := layoutModule.GetRedirect(3, "/")
+            body.Tag("p").Text("Build wystartował")
+                
+            fmt.Fprint(out, layout.String())
+            
+            
         } else if _, isOk := urlmatch.Match("makebuild"); isOk {
             
             listBuild, errList := manager.GetListBuild()

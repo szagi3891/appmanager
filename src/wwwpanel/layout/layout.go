@@ -53,6 +53,7 @@ func getStyle() string {
     padding:0;
     border:0;
     font-family: monospace;
+    box-sizing: border-box;
 }
 
 html {
@@ -63,6 +64,7 @@ html {
 body {
 	width: 100%;
 	height: 100%;
+    padding: 10px;
 }
 
 a {
@@ -95,6 +97,8 @@ td {
 	border: 0px;
 	padding:0px;
 	vertical-align: top;
+    border: 1px solid black;
+    padding: 4px;
 }
 
 th {

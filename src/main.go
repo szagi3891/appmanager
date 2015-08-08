@@ -125,17 +125,7 @@ func main(){
     
     
     /*
-    time.Sleep(time.Second * 10)
-    
     fmt.Println("przełączam backend")
-    
-    backend2, errBackend2 := managerBackend.New("build_20150806221324_f1c4c02114226c90a4a202dcbeec65366970fb55")
-    
-    if errBackend2 != nil {
-        
-        fmt.Println(errBackend2)
-        os.Exit(1)
-    }
     
     proxy.Switch(backend2)
     */

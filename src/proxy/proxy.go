@@ -12,7 +12,7 @@ import (
 
 
 type Proxy struct {
-    
+    mainPort  int
     appStderr *logrotorModule.LogWriter
     listener  *net.TCPListener
     backend   *backendModule.Backend
@@ -39,6 +39,7 @@ func New(appStderr *logrotorModule.LogWriter, mainPort int, logrotor *logrotorMo
     
     
     proxy := &Proxy{
+        mainPort  : mainPort,
         appStderr : appStderr,
         listener  : listener,
         backend   : backend,
@@ -49,13 +50,19 @@ func New(appStderr *logrotorModule.LogWriter, mainPort int, logrotor *logrotorMo
     return proxy, nil
 }
 
+func (self *Proxy) GetMainPort() int {
+    return self.mainPort
+}
+
+func (self *Proxy) GetActive() *backendModule.Backend {
+    return self.backend
+}
 
 
 func (self *Proxy) Switch(backend *backendModule.Backend) {
     
     self.backend = backend
 }
-
 
 
 func (self *Proxy) start() {

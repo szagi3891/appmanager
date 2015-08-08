@@ -2,7 +2,6 @@ package backend
 
 
 import (
-    //"os"
     "os/exec"
     "sync"
     "strconv"
@@ -168,6 +167,7 @@ func (self *Manager) createNewBackend(buildName string) (*Backend, *errorStack.E
         if value == nil {
             
             newBeckend := Backend{
+                name    : buildName,
                 addr    : "127.0.0.1",
                 port    : portIndex,
                 isClose : make(chan bool),
@@ -237,16 +237,27 @@ type AppInfo struct {
     Active  int
 }
 
-func (self *Manager) GetAppList() (*[]AppInfo, *errorStack.Error) {
+func (self *Manager) GetAppList() *[]*AppInfo {
     
-    fmt.Println("get app list ...")
+    out := []*AppInfo{}
     
+    for _, back := range self.ports {
+        
+        if back != nil {
+            
+            out = append(out, &AppInfo{
+                Port : back.Port(),
+                Name : back.Name(),
+                Active : back.Active(),
+            })
+        }
+    }
+    
+    return &out
     /*
         lista działających aplikacji
         nazwa buildu, port, na niego ruch ?, ilość obsługiwanych połączeń
     */
-
-    return nil, nil
 }
 
 

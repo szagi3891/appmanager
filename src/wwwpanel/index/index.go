@@ -1,14 +1,53 @@
 package index
 
 import (
+    "strconv"
     "net/http"
     "../layout"
     "../../htmlBuilder"
+    "../../backend"
 )
 
-func GetResponse(req *http.Request, listBuild *[]string, lastCommitRepo string, isAvailableNewCommit bool) htmlBuilder.Node {
+func int2string(value int) string {
+    return strconv.FormatInt(int64(value), 10)
+}
+
+func GetResponse(req *http.Request, appInfo *[]*backend.AppInfo, mainPort, activePort int, listBuild *[]string, lastCommitRepo string, isAvailableNewCommit bool) htmlBuilder.Node {
     
     root, body := layout.GetLayout()
+    
+    body.Tag("p").Text("Aktywne przekierowanie ruchu: " + int2string(mainPort) + " -> " + int2string(activePort))
+    body.Tag("p").Html("&nbsp;")
+    
+    
+    body.Tag("p").Text("Działające aplikacje:")
+    
+    table := body.Tag("table")
+    
+    tableHeader := table.Tag("tr")
+    
+    tableHeader.Tag("td").Text("Nazwa builda")
+    tableHeader.Tag("td").Text("Port")
+    tableHeader.Tag("td").Text("Aktywnych połączeń")
+    
+    
+    for _, appItem := range *appInfo {
+        
+        line := table.Tag("tr")
+        
+        firstCeill := line.Tag("td")
+        firstCeill.Text(appItem.Name)
+        
+        line.Tag("td").Text(strconv.FormatInt(int64(appItem.Port), 10))
+        line.Tag("td").Text(strconv.FormatInt(int64(appItem.Active), 10))
+        
+        if activePort == appItem.Port {
+            firstCeill.Attr("style", "color:red")
+        }
+    }
+    
+    body.Tag("p").Html("&nbsp;")
+    
     
     
     divMake := body.Tag("p").Text("Ostatni komit w repo : " + lastCommitRepo)
@@ -22,11 +61,15 @@ func GetResponse(req *http.Request, listBuild *[]string, lastCommitRepo string, 
     }
     
     
+    tableBuild := body.Tag("table")
     
-    body.Tag("p").Text("buildy :")
+    tableBuild.Tag("tr").Tag("td").Text("Buildy:")
     
     for _, item := range *listBuild {
-        body.Tag("p").Text(item)
+        
+        line := tableBuild.Tag("tr")
+        line.Tag("td").Text(item)
+        line.Tag("td").Tag("a").Attr("href", "/start/" + item).Text("app start")
     }
     
     return root

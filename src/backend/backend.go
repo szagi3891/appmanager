@@ -11,6 +11,7 @@ import (
 
 
 type Backend struct {
+    name    string
     stop    bool
     addr    string
     port    int
@@ -47,6 +48,9 @@ func (self *Backend) checkStrop() {
     }
 }
 
+func (self *Backend) Name() string {
+    return self.name
+}
 
 func (self *Backend) Stop() {
     
@@ -63,6 +67,9 @@ func (self *Backend) Stop() {
     self.stderr.Stop()
 }
 
+func (self *Backend) Port() int {
+    return self.port
+}
 
 func (self *Backend) Active() int {
     
