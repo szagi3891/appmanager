@@ -50,6 +50,7 @@ func New(appStderr *logrotorModule.LogWriter, mainPort int, logrotor *logrotorMo
 }
 
 
+
 func (self *Proxy) Switch(backend *backendModule.Backend) {
     
     self.backend = backend

@@ -2,7 +2,7 @@ package backend
 
 
 import (
-    "os"
+    //"os"
     "os/exec"
     "sync"
     "strconv"
@@ -91,7 +91,7 @@ type Manager struct {
 
 
 
-func (self *Manager) getSha1Repo() (string, *errorStack.Error) {
+func (self *Manager) GetSha1Repo() (string, *errorStack.Error) {
     
     cmd := exec.Command("git", "rev-parse", "HEAD")
     
@@ -121,7 +121,7 @@ func (self *Manager) getSha1Repo() (string, *errorStack.Error) {
 
 func (self *Manager) MakeBuild() (string, *errorStack.Error) {
     
-    repoSha1, errRepo := self.getSha1Repo()
+    repoSha1, errRepo := self.GetSha1Repo()
     
     if errRepo != nil {
         return "", errRepo
@@ -218,8 +218,40 @@ func (self *Manager) New(buildName string) (*Backend, *errorStack.Error) {
     return newBackend, nil
 }
 
-//startuje ostatniego builda, jeśli nie ma nic w katalogu z buildami to sobie tworzy takowego builda
-func (self *Manager) StartLastBuild() (*Backend, *errorStack.Error) {
+
+//sprawdza czy z obecnego komitu można zrobić nowego builda
+func (self *Manager) IsAvailableNewCommit(listBuild *[]string, lastCommitRepo string) bool {
+    
+    for _, name := range *listBuild {
+        if lastCommitRepo == name[21:] {
+            return false
+        }
+    }
+    
+    return true
+}
+
+type AppInfo struct {
+    Port    int
+    Name    string
+    Active  int
+}
+
+func (self *Manager) GetAppList() (*[]AppInfo, *errorStack.Error) {
+    
+    fmt.Println("get app list ...")
+    
+    /*
+        lista działających aplikacji
+        nazwa buildu, port, na niego ruch ?, ilość obsługiwanych połączeń
+    */
+
+    return nil, nil
+}
+
+
+func (self *Manager) GetListBuild() (*[]string, *errorStack.Error) {
+    
     
     list, errList := ioutil.ReadDir(self.buildDir)
     
@@ -227,7 +259,31 @@ func (self *Manager) StartLastBuild() (*Backend, *errorStack.Error) {
         return nil, errorStack.From(errList)
     }
     
-    lastName, isFind := findLast(&list)
+    out := []string{}
+    
+    for _, item := range list {
+        
+        name := item.Name()
+        
+        if isValidBuildName(name) {
+            out = append(out, name)
+        }
+    }
+    
+    return &out, nil
+}
+
+
+//startuje ostatniego builda, jeśli nie ma nic w katalogu z buildami to sobie tworzy takowego builda
+func (self *Manager) StartLastBuild() (*Backend, *errorStack.Error) {
+    
+    list, errList := self.GetListBuild()
+    
+    if errList != nil {
+        return nil, errList
+    }
+    
+    lastName, isFind := findLast(list)
     
     if isFind == true {
         
@@ -246,36 +302,36 @@ func (self *Manager) StartLastBuild() (*Backend, *errorStack.Error) {
 }
 
 
-func findLast(list *[]os.FileInfo) (string, bool) {
+func findLast(list *[]string) (string, bool) {
     
     max := ""
-    var last *os.FileInfo
+    last := ""
     
     for _, item := range *list {
         
-        if data, isOk := getDate(item.Name()); isOk {
-            
-            if max < data {
-                max  = data
-                last = &item
-            }
+        data := item[6:20]
+        
+        if max < data {
+            max  = data
+            last = item
         }
-    }    
+    }
     
-    if last == nil {
+    if last == "" {
         return "", false
     } else {
-        return (*last).Name(), true
+        return last, true
     }
 }
 
-func getDate(name string) (string, bool) {
+
+func isValidBuildName(name string) (bool) {
     
     //5 + 1 + 14 + 1 + 40
     //build_14cyfr_40cyfr
     
     if len(name) != 61 {
-        return "", false
+        return false
     }
     
     name1 := name[0:6]
@@ -283,14 +339,7 @@ func getDate(name string) (string, bool) {
     name3 := name[20:21]
     name4 := name[21:]
     
-    if name1 == "build_" && isDigit(name2, false) && name3 == "_" && isDigit(name4, true) {
-        
-        return name2, true
-        
-    } else {
-        
-        return "", false
-    }
+    return name1 == "build_" && isDigit(name2, false) && name3 == "_" && isDigit(name4, true)
 }
 
 

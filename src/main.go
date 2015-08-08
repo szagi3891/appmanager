@@ -9,6 +9,7 @@ import (
     backendModule "./backend"
     configModule "./config"
     logrotorModule "./logrotor"
+    "./wwwpanel"
 )
 
 
@@ -83,11 +84,6 @@ func main(){
     }
     
     
-    /*
-    errMake := managerBackend.MakeBuild()
-    fmt.Println("errMake:", errMake)
-    return
-    */
     
     
     //TODO - zrobić pingowanie w nowy beckend, gotowość dopiero ma zgłosić jeśli będzie odpowiadał na zadanym porcie
@@ -122,6 +118,10 @@ func main(){
     
     
     fmt.Println("start proxy: ", proxy)
+    
+    
+                        //start panelu do zarządzania
+    wwwpanel.Start(8889, appStderr, managerBackend, proxy)
     
     
     /*
