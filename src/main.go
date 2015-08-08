@@ -104,12 +104,11 @@ func main(){
         stare pliki z logami będą kasowane automatycznie żeby nie zapchać dysku
     */
     
-    backend1, errCreate1 := managerBackend.New("build_20150807105813_0a03ff56acdeb3e9001307273c80e30918f1e0a0")
+    backend1, errStartLastBuild := managerBackend.StartLastBuild()
     
-    
-    if errCreate1 != nil {
+    if errStartLastBuild != nil {
         
-        fmt.Println(errCreate1)
+        fmt.Println(errStartLastBuild)
         os.Exit(1)
     }
     

@@ -2,6 +2,7 @@ package backend
 
 
 import (
+    "os"
     "os/exec"
     "sync"
     "strconv"
@@ -11,6 +12,7 @@ import (
     "../errorStack"
     logrotorModule "../logrotor"
     utils "../utils"
+    "io/ioutil"
     "fmt"
 )
 
@@ -117,12 +119,12 @@ func (self *Manager) getSha1Repo() (string, *errorStack.Error) {
 }
 
 
-func (self *Manager) MakeBuild() *errorStack.Error {
+func (self *Manager) MakeBuild() (string, *errorStack.Error) {
     
     repoSha1, errRepo := self.getSha1Repo()
     
     if errRepo != nil {
-        return errRepo
+        return "", errRepo
     }
     
     
@@ -149,10 +151,10 @@ func (self *Manager) MakeBuild() *errorStack.Error {
     //panic("TODO - wyniki działania programu z bufora trzeba przepchnąć do loga")
     
     if err != nil {
-        return errorStack.From(err)
+        return "", errorStack.From(err)
 	}
     
-    return nil
+    return buildName, nil
 }
 
 
@@ -216,3 +218,102 @@ func (self *Manager) New(buildName string) (*Backend, *errorStack.Error) {
     return newBackend, nil
 }
 
+//startuje ostatniego builda, jeśli nie ma nic w katalogu z buildami to sobie tworzy takowego builda
+func (self *Manager) StartLastBuild() (*Backend, *errorStack.Error) {
+    
+    list, errList := ioutil.ReadDir(self.buildDir)
+    
+    if errList != nil {
+        return nil, errorStack.From(errList)
+    }
+    
+    lastName, isFind := findLast(&list)
+    
+    if isFind == true {
+        
+        return self.New(lastName)
+        
+    } else {
+        
+        newBuildName, errBuild := self.MakeBuild()
+        
+        if errBuild != nil {
+            return nil, errBuild
+        }
+        
+        return self.New(newBuildName)   
+    }
+}
+
+
+func findLast(list *[]os.FileInfo) (string, bool) {
+    
+    max := ""
+    var last *os.FileInfo
+    
+    for _, item := range *list {
+        
+        if data, isOk := getDate(item.Name()); isOk {
+            
+            if max < data {
+                max  = data
+                last = &item
+            }
+        }
+    }    
+    
+    if last == nil {
+        return "", false
+    } else {
+        return (*last).Name(), true
+    }
+}
+
+func getDate(name string) (string, bool) {
+    
+    //5 + 1 + 14 + 1 + 40
+    //build_14cyfr_40cyfr
+    
+    if len(name) != 61 {
+        return "", false
+    }
+    
+    name1 := name[0:6]
+    name2 := name[6:20]
+    name3 := name[20:21]
+    name4 := name[21:]
+    
+    if name1 == "build_" && isDigit(name2, false) && name3 == "_" && isDigit(name4, true) {
+        
+        return name2, true
+        
+    } else {
+        
+        return "", false
+    }
+}
+
+
+func isDigit(name string, isHash bool) bool {
+    
+    for i:=0; i<len(name); i++ {    //, char := range name {
+        
+        if isHash {
+            
+            if "0"[0] <= name[i] && name[i] <= "9"[0] || "a"[0] <= name[i] && name[i] <= "f"[0] {
+                //ok
+            } else {
+                return false
+            }
+        
+        } else {
+            if "0"[0] <= name[i] && name[i] <= "9"[0] {
+                //ok
+            } else {
+                return false
+            }
+        }
+    }
+    
+    return true
+}
