@@ -76,12 +76,10 @@ func (self *Backend) Active() int {
     return self.active
 }
 
-
 func (self *Backend) GetAddr() string {
     
     return self.addr + ":" + strconv.FormatInt(int64(self.port), 10)
 }
-
 
 func (self *Backend) Inc() {
     
@@ -96,7 +94,6 @@ func (self *Backend) Inc() {
 	self.mutex.Unlock()
 }
 
-
 func (self *Backend) Sub() {
     
     self.mutex.Lock()
@@ -106,3 +103,4 @@ func (self *Backend) Sub() {
     
     self.checkStrop()
 }
+

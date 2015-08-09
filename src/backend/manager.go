@@ -6,6 +6,7 @@ import (
     "sync"
     "strconv"
     "bytes"
+    "sort"
     userModule "os/user"
     "syscall"
     "../errorStack"
@@ -88,7 +89,10 @@ type Manager struct {
     gopath    string
 }
 
-
+func (self *Manager) GetByPort(port int) (*Backend, bool) {
+    backend, isFind := self.ports[port]
+    return backend, isFind
+}
 
 func (self *Manager) GetSha1Repo() (string, *errorStack.Error) {
     
@@ -239,25 +243,35 @@ type AppInfo struct {
 
 func (self *Manager) GetAppList() *[]*AppInfo {
     
-    out := []*AppInfo{}
+    order  := []string{}
+    preOut := map[string]*AppInfo{}
     
     for _, back := range self.ports {
         
         if back != nil {
             
-            out = append(out, &AppInfo{
+            fullName := back.Name() + "_" + strconv.FormatInt(int64(back.Port()), 10)
+            
+            order = append(order, fullName)
+            
+            preOut[fullName] = &AppInfo{
                 Port : back.Port(),
                 Name : back.Name(),
                 Active : back.Active(),
-            })
+            }
         }
     }
     
+    sort.Sort(sort.Reverse(sort.StringSlice(order)))
+    
+    
+    out := []*AppInfo{}
+    
+    for _, name := range order {
+        out = append(out, preOut[name])
+    }
+    
     return &out
-    /*
-        lista działających aplikacji
-        nazwa buildu, port, na niego ruch ?, ilość obsługiwanych połączeń
-    */
 }
 
 

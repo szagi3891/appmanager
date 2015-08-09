@@ -71,8 +71,27 @@ func Start(port int64, appStderr *logrotorModule.LogWriter, manager *backendModu
             
             //Akcja przełączająca beckend - trzeba zrobić mutex
             //przełączenie ma iść na konkretny numer portu oraz na konkretną nazwę builda
-            
-        } else if appName, _, isOk := urlmatch.MatchString("start"); isOk {
+            return
+        
+        }
+        
+        if appName, nextUrl, isOk := urlmatch.MatchString("proxyset"); isOk {
+        
+            if port, _, isOk := nextUrl.MatchInt(); isOk {
+                
+                isOk := proxy.SwitchByNameAndPort(appName, port)
+                
+                if isOk {
+                    fmt.Fprint(out, actionMessage.GetResponse("Przełączono poprawnie"))
+                } else {
+                    fmt.Fprint(out, actionMessage.GetResponse("Nieprzełączono"))
+                }
+                
+                return
+            }
+        }
+        
+        if appName, _, isOk := urlmatch.MatchString("start"); isOk {
 
             _, errStart := manager.New(appName)
             
@@ -82,13 +101,15 @@ func Start(port int64, appStderr *logrotorModule.LogWriter, manager *backendModu
                 panic("TODO")
             }
             
-            layout, body := layoutModule.GetRedirect(3, "/")
+            layout, body := layoutModule.GetRedirect(2, "/")
             body.Tag("p").Text("Build wystartował")
                 
             fmt.Fprint(out, layout.String())
             
-            
-        } else if _, isOk := urlmatch.Match("makebuild"); isOk {
+            return
+        }
+        
+        if _, isOk := urlmatch.Match("makebuild"); isOk {
             
             listBuild, errList := manager.GetListBuild()
             
@@ -113,7 +134,7 @@ func Start(port int64, appStderr *logrotorModule.LogWriter, manager *backendModu
                 
                 if errMake == nil {
                     
-                    layout, body := layoutModule.GetRedirect(3, "/")
+                    layout, body := layoutModule.GetRedirect(2, "/")
                     body.Tag("p").Text("Utworzono builda: " + newName)
                     
                     fmt.Fprint(out, layout.String())
@@ -125,16 +146,18 @@ func Start(port int64, appStderr *logrotorModule.LogWriter, manager *backendModu
             
             } else {
                 
-                layout, body := layoutModule.GetRedirect(3, "/")
+                layout, body := layoutModule.GetRedirect(2, "/")
                 body.Tag("p").Text("Build był juz zbudowany")
                 
                 fmt.Fprint(out, layout.String())
             }
             
-        } else {
-            
-            fmt.Fprint(out, "404")
+            return
+        
         }
+        
+        
+        fmt.Fprint(out, "404")
     })
 }
 

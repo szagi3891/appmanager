@@ -110,7 +110,7 @@ func main(){
     
     
     
-    proxy, errStart := proxyModule.New(appStderr, config.GetPortMain(), logrotor, backend1)
+    proxy, errStart := proxyModule.New(appStderr, config.GetPortMain(), logrotor, managerBackend, backend1)
     
     if errStart != nil {
         panic(errStart)
@@ -122,6 +122,14 @@ func main(){
     
                         //start panelu do zarządzania
     wwwpanel.Start(8889, appStderr, managerBackend, proxy)
+    
+    
+    //dorobić akcję do przełączania aktywnego backendu
+    
+    //obiekt menedżera backendu powinien być przykryty obiektem proxy
+    //tylko obiektem proxy powinniśmy sterować żeby sobie wysterować to co trzeba
+    
+    //dorobić akcję do wyłączania backendu który nie obsługuje już ruchu i nie jest aktywny ...
     
     
     /*

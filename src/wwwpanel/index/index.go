@@ -44,6 +44,15 @@ func GetResponse(req *http.Request, appInfo *[]*backend.AppInfo, mainPort, activ
         if activePort == appItem.Port {
             firstCeill.Attr("style", "color:red")
         }
+        
+        tdSet := line.Tag("td")
+        
+        if appItem.Port == activePort {
+            tdSet.Html("&nbsp;")
+        } else {
+            link := "/proxyset/" + appItem.Name + "/" + strconv.FormatInt(int64(appItem.Port), 10)
+            tdSet.Tag("a").Attr("href", link).Text("Ustaw jako główną")
+        }
     }
     
     body.Tag("p").Html("&nbsp;")

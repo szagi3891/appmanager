@@ -15,11 +15,12 @@ type Proxy struct {
     mainPort  int
     appStderr *logrotorModule.LogWriter
     listener  *net.TCPListener
+    manager   *backendModule.Manager
     backend   *backendModule.Backend
 }
 
 
-func New(appStderr *logrotorModule.LogWriter, mainPort int, logrotor *logrotorModule.Manager, backend *backendModule.Backend) (*Proxy, error) {
+func New(appStderr *logrotorModule.LogWriter, mainPort int, logrotor *logrotorModule.Manager, manager *backendModule.Manager, backend *backendModule.Backend) (*Proxy, error) {
     
     
     addr := "127.0.0.1:" + strconv.FormatInt(int64(mainPort), 10)
@@ -42,6 +43,7 @@ func New(appStderr *logrotorModule.LogWriter, mainPort int, logrotor *logrotorMo
         mainPort  : mainPort,
         appStderr : appStderr,
         listener  : listener,
+        manager   : manager,
         backend   : backend,
     }
     
@@ -58,6 +60,17 @@ func (self *Proxy) GetActive() *backendModule.Backend {
     return self.backend
 }
 
+func (self *Proxy) SwitchByNameAndPort(name string, port int) bool {
+    
+    backend, isFind := self.manager.GetByPort(port)
+    
+    if isFind && backend != nil {
+        self.backend = backend
+        return true
+    }
+    
+    return false
+}
 
 func (self *Proxy) Switch(backend *backendModule.Backend) {
     
