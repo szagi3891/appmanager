@@ -93,9 +93,15 @@ func runLogGroup(pipe chan *[]byte, isClose chan bool, pathFile string) {
 
         if newData == nil {
             
+            fmt.Println("Otrzymałem nil-a - trzeba zamknąć tego loga - wysyłam resztki z bufora")
+            
             sendToFile <- buf
+            
+            fmt.Println("Otrzymałem nil-a - trzeba zamknąć tego loga - teraz wysyłam nila")
+            
             sendToFile <- nil       //zakończ działanie
 
+            fmt.Println("Otrzymałem nil-a - trzeba zamknąć tego loga - się wreszcie zamykam")
             close(isClose)
             return true
 

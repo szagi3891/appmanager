@@ -89,9 +89,34 @@ type Manager struct {
     gopath    string
 }
 
-func (self *Manager) GetByPort(port int) (*Backend, bool) {
+func (self *Manager) SwitchByNameAndPort(name string, port int) (*Backend, bool) {
+    
     backend, isFind := self.ports[port]
-    return backend, isFind
+    
+    if isFind && backend != nil && backend.Name() == name {
+        //self.backend = backend
+        return backend, true
+        //return true
+    }
+    
+    return nil, false
+}
+
+func (self *Manager) DownByNameAndPort(name string, port int) bool {
+    
+    //trzeba wprowadzić mutex
+    
+    backend, isFind := self.ports[port]
+    
+    if isFind && backend != nil && backend.Name() == name {
+        
+        delete(self.ports, port)
+        
+        backend.Stop()
+        return true
+    }
+    
+    return false
 }
 
 func (self *Manager) GetSha1Repo() (string, *errorStack.Error) {

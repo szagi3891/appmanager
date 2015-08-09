@@ -5,6 +5,13 @@ import (
     "../../htmlBuilder"
 )
 
+func GetRedirectMessage(time int, url string, message string) (htmlBuilder.Node) {
+    
+    layout, body := GetRedirect(time, url)
+    body.Tag("p").Text(message)
+    return layout
+}
+
 func GetRedirect(time int, url string) (htmlBuilder.Node, htmlBuilder.Node) {
     
     root := htmlBuilder.Text("")

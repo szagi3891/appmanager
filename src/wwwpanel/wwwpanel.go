@@ -82,9 +82,25 @@ func Start(port int64, appStderr *logrotorModule.LogWriter, manager *backendModu
                 isOk := proxy.SwitchByNameAndPort(appName, port)
                 
                 if isOk {
-                    fmt.Fprint(out, actionMessage.GetResponse("Przełączono poprawnie"))
+                    fmt.Fprint(out, layoutModule.GetRedirectMessage(2, "/", "Wyłączono poprawnie"))
                 } else {
-                    fmt.Fprint(out, actionMessage.GetResponse("Nieprzełączono"))
+                    fmt.Fprint(out, layoutModule.GetRedirectMessage(2, "/", "Niewyłączono"))
+                }
+                
+                return
+            }
+        }
+        
+        if appName, nextUrl, isOk := urlmatch.MatchString("down"); isOk {
+        
+            if port, _, isOk := nextUrl.MatchInt(); isOk {
+                
+                isOk := proxy.DownByNameAndPort(appName, port)
+                
+                if isOk {
+                    fmt.Fprint(out, layoutModule.GetRedirectMessage(2, "/", "Przełączono poprawnie"))
+                } else {
+                    fmt.Fprint(out, layoutModule.GetRedirectMessage(2, "/", "Nieprzełączono"))
                 }
                 
                 return

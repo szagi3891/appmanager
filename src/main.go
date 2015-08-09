@@ -38,6 +38,7 @@ func main(){
         os.Exit(1)
     }
     
+    //panic("TODO - jest problem na wyłączaniu aplikacji - wyłączony backend trzeba usunać z mapy")
     
     interruptNotify()
     
@@ -85,58 +86,32 @@ func main(){
     
     
     
-    
     //TODO - zrobić pingowanie w nowy beckend, gotowość dopiero ma zgłosić jeśli będzie odpowiadał na zadanym porcie
     
     //TODO - zrobić rotowanie i gzipowanie logów
     
     //TODO - trzeba pozbyć się logowania poprzez fmt
     
-    //TODO - trzeba zrobić panel do zarządzania wersjami aplikacji
+    //zrobić obsługę zmiennej : rotatetotalsize
+    //stare pliki z logami będą kasowane automatycznie żeby nie zapchać dysku
     
-    /*
-
-        zrobić obsługę zmiennej : rotatetotalsize
-        stare pliki z logami będą kasowane automatycznie żeby nie zapchać dysku
-    */
-    
-    backend1, errStartLastBuild := managerBackend.StartLastBuild()
-    
-    if errStartLastBuild != nil {
-        
-        fmt.Println(errStartLastBuild)
-        os.Exit(1)
-    }
+    //obiekt menedżera backendu powinien być przykryty obiektem proxy
+    //tylko obiektem proxy powinniśmy sterować żeby sobie wysterować to co trzeba
     
     
     
-    proxy, errStart := proxyModule.New(appStderr, config.GetPortMain(), logrotor, managerBackend, backend1)
+    proxy, errStart := proxyModule.New(appStderr, config.GetPortMain(), logrotor, managerBackend)
     
     if errStart != nil {
         panic(errStart)
     }
     
     
-    fmt.Println("start proxy: ", proxy)
     
-    
-                        //start panelu do zarządzania
+                        //start panelu do zarządzania konfiguracją proxy
     wwwpanel.Start(8889, appStderr, managerBackend, proxy)
     
     
-    //dorobić akcję do przełączania aktywnego backendu
-    
-    //obiekt menedżera backendu powinien być przykryty obiektem proxy
-    //tylko obiektem proxy powinniśmy sterować żeby sobie wysterować to co trzeba
-    
-    //dorobić akcję do wyłączania backendu który nie obsługuje już ruchu i nie jest aktywny ...
-    
-    
-    /*
-    fmt.Println("przełączam backend")
-    
-    proxy.Switch(backend2)
-    */
     
     
     
@@ -144,10 +119,5 @@ func main(){
     stop := make(chan bool)
     <- stop
     
-    
-    //start i stop nowego backandu
-    
-    
-    //TODO - nowy byt, struktura reprezentująca listę buildów ...
     
 }

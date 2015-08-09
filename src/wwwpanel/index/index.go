@@ -29,6 +29,8 @@ func GetResponse(req *http.Request, appInfo *[]*backend.AppInfo, mainPort, activ
     tableHeader.Tag("td").Text("Nazwa builda")
     tableHeader.Tag("td").Text("Port")
     tableHeader.Tag("td").Text("Aktywnych połączeń")
+    tableHeader.Tag("td").Text("-")
+    tableHeader.Tag("td").Text("-")
     
     
     for _, appItem := range *appInfo {
@@ -52,6 +54,15 @@ func GetResponse(req *http.Request, appInfo *[]*backend.AppInfo, mainPort, activ
         } else {
             link := "/proxyset/" + appItem.Name + "/" + strconv.FormatInt(int64(appItem.Port), 10)
             tdSet.Tag("a").Attr("href", link).Text("Ustaw jako główną")
+        }
+        
+        tdDown := line.Tag("td")
+        
+        if appItem.Port == activePort || appItem.Active > 0 {
+            tdDown.Html("&nbsp;")
+        } else {
+            link := "/down/" + appItem.Name + "/" + strconv.FormatInt(int64(appItem.Port), 10)
+            tdDown.Tag("a").Attr("href", link).Text("Wyłącz")
         }
     }
     

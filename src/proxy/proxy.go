@@ -20,7 +20,14 @@ type Proxy struct {
 }
 
 
-func New(appStderr *logrotorModule.LogWriter, mainPort int, logrotor *logrotorModule.Manager, manager *backendModule.Manager, backend *backendModule.Backend) (*Proxy, error) {
+func New(appStderr *logrotorModule.LogWriter, mainPort int, logrotor *logrotorModule.Manager, manager *backendModule.Manager) (*Proxy, *errorStack.Error) {
+    
+    
+    backend, errStartLastBuild := manager.StartLastBuild()
+    
+    if errStartLastBuild != nil {
+        return nil, errStartLastBuild
+    }
     
     
     addr := "127.0.0.1:" + strconv.FormatInt(int64(mainPort), 10)
@@ -28,14 +35,14 @@ func New(appStderr *logrotorModule.LogWriter, mainPort int, logrotor *logrotorMo
     addProxy, err1 := net.ResolveTCPAddr("tcp", addr)
     
     if err1 != nil {
-        return nil, err1
+        return nil, errorStack.From(err1)
     }
         
     
 	listener, err2 := net.ListenTCP("tcp", addProxy)
     
 	if err2 != nil {
-		return nil, err2
+        return nil, errorStack.From(err2)
 	}
     
     
@@ -62,20 +69,30 @@ func (self *Proxy) GetActive() *backendModule.Backend {
 
 func (self *Proxy) SwitchByNameAndPort(name string, port int) bool {
     
-    backend, isFind := self.manager.GetByPort(port)
+    backend, isSwitch := self.manager.SwitchByNameAndPort(name, port)
     
-    if isFind && backend != nil {
+    if isSwitch {
         self.backend = backend
-        return true
     }
     
-    return false
+    return isSwitch
 }
 
+
+func (self *Proxy) DownByNameAndPort(name string, port int) bool {
+    
+    isDown := self.manager.DownByNameAndPort(name, port)
+    
+    return isDown
+}
+
+
+/*
 func (self *Proxy) Switch(backend *backendModule.Backend) {
     
     self.backend = backend
 }
+*/
 
 
 func (self *Proxy) start() {
