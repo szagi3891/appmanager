@@ -36,17 +36,19 @@ func copyArr(src *[]byte) *[]byte {
     return &cop
 }
 
-func (self *logWriter) WriteString(p string) () {
+func (self *logWriter) WriteStringLn(p string) () {
     
     //fmt.Println(p)
     
-    p2 := []byte(p)
+    p2 := []byte(p + "\n")
     
     p3 := copyArr(&p2)
     
     self.pipe <- p3
 }
 
+
+//to dla applikacji które przekazują nam swoje uformowane logi
 func (self *logWriter) Write(p []byte) (n int, err error) {
     
     //fmt.Println(string(p))

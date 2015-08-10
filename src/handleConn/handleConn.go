@@ -34,7 +34,7 @@ func Start(addr string, logs *logrotorModule.Logs, getBackend func() (string, fu
 
             if errAccept != nil {
                 
-                logs.Err.WriteString(errorStack.From(errAccept).String())
+                logs.Err.WriteStringLn(errorStack.From(errAccept).String())
                 
             } else {
                 
@@ -42,7 +42,7 @@ func Start(addr string, logs *logrotorModule.Logs, getBackend func() (string, fu
                 
                 if errConnectect != nil {
                     
-                    logs.Err.WriteString(errorStack.From(errConnectect).String())
+                    logs.Err.WriteStringLn(errorStack.From(errConnectect).String())
                     
                 } else {
                     

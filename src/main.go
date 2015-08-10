@@ -12,34 +12,19 @@ import (
 )
 
 
-func interruptNotify() {
+func main(){
     
-    signalInterrupt := make(chan os.Signal, 1)
-    signal.Notify(signalInterrupt, os.Interrupt)
+    code := run()
     
-    go func(){
-        
-        for sig := range signalInterrupt {
-            // sig is a ^C, handle it
-            
-            fmt.Println(sig)
-            panic("signalInterrupt and stop")
-        }
-    }()
+    os.Exit(code)
 }
 
-
-
-func main(){
+func run() int {
     
     if len(os.Args) != 2 {
         fmt.Println("Spodziewano się dokładnie dwóch parametrów")
-        os.Exit(1)
+        return 1
     }
-    
-    //panic("TODO - jest problem na wyłączaniu aplikacji - wyłączony backend trzeba usunać z mapy")
-    
-    interruptNotify()
     
     
     config, errParse := configModule.Parse(os.Args[1])
@@ -47,7 +32,7 @@ func main(){
     if errParse != nil {
         
         fmt.Println(errParse)
-        os.Exit(1)
+        return 1
     }
     
     
@@ -62,23 +47,28 @@ func main(){
     if errLogrotor != nil {
         
         fmt.Println(errLogrotor)
-        os.Exit(1)
+        return 1
     }
     
     
                                                 //logi aplikacji    
     logs := logrotor.NewLogs("appmanager")
     
+    defer logs.Stop()
+    
     
     managerBackend, errInitManager := backendModule.Init(config, logrotor, logs)
     
     
     if errInitManager != nil {
-            
+        
         fmt.Println(errInitManager)
-        os.Exit(1)
+        return 1
     }
     
+    //TODO - tutaj można zrobić :
+    //defer managerBackend.Stop()
+        
     
     
     //TODO - zrobić pingowanie w nowy beckend, gotowość dopiero ma zgłosić jeśli będzie odpowiadał na zadanym porcie
@@ -93,15 +83,31 @@ func main(){
     
     
                         //start panelu do zarządzania konfiguracją proxy
-    wwwpanel.Start(8889, logs, managerBackend)
+    go wwwpanel.Start(8889, logs, managerBackend)
     
     
     
     
-    
-            //nie zakańczaj się
-    stop := make(chan bool)
-    <- stop
+    signalInterrupt := make(chan os.Signal, 1)
+    signal.Notify(signalInterrupt, os.Interrupt)
     
     
+    for sig := range signalInterrupt {
+        // sig is a ^C, handle it
+        
+                                        //zakończ tylko wtedy jeśli przyjdzie Ctrl + C        
+        if sig == os.Interrupt {
+            
+            logs.Std.WriteStringLn("Przyszedł sygnał ctrl + c - wyłączam proxy")
+            close(signalInterrupt)
+            
+        } else {
+            
+            logs.Std.WriteStringLn("Przyszedł nieznany sygnał - ignoruję")
+        }
+    }
+    
+    logs.Std.WriteStringLn("wyłączam proxy z kodem wyjścia 0")
+    
+    return 0
 }
