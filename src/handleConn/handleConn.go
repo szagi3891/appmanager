@@ -6,10 +6,56 @@ import (
     "time"
     "io"
     "fmt"
+    "../errorStack"
+    logrotorModule "../logrotor"
     backendModule "../backend"
 )
 
 
+func Start(addr string, appStderr *logrotorModule.LogWriter, getBackend func() *backendModule.Backend) *errorStack.Error {
+    
+    addProxy, err1 := net.ResolveTCPAddr("tcp", addr)
+    
+    if err1 != nil {
+        return errorStack.From(err1)
+    }
+        
+    
+	listener, err2 := net.ListenTCP("tcp", addProxy)
+    
+	if err2 != nil {
+        return errorStack.From(err2)
+	}
+    
+    go func(){
+        
+        for {
+
+            conn, errAccept := listener.AcceptTCP()
+
+            if errAccept != nil {
+                
+                appStderr.WriteString(errorStack.From(errAccept).String())
+                
+            } else {
+                
+                errConnectect := handleConn(getBackend(), conn)
+                
+                if errConnectect != nil {
+                    
+                    appStderr.WriteString(errorStack.From(errConnectect).String())
+                    
+                } else {
+                    
+                    //TODO
+                    //trzeba jakoś logować prawidłowe połączenia
+                }
+            }
+        }
+    }()
+    
+    return nil
+}
 
 type connectionFlag struct {
     
@@ -85,8 +131,7 @@ func (self *connectionFlag) Wait() {
 
 
 
-func HandleConn(backend *backendModule.Backend, connIn *net.TCPConn) error {
-    
+func handleConn(backend *backendModule.Backend, connIn *net.TCPConn) error {
     
     addrServer, errParse := net.ResolveTCPAddr("tcp", backend.GetAddr())
     
