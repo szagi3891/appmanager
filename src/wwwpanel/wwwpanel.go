@@ -9,7 +9,6 @@ import (
     logrotorModule "../logrotor"
     "fmt"
     "sort"
-    proxyModule   "../proxy"
     backendModule "../backend"
     layoutModule   "./layout"
     actionIndex    "./index"
@@ -17,7 +16,7 @@ import (
 )
 
 
-func Start(port int64, appStderr *logrotorModule.LogWriter, manager *backendModule.Manager, proxy *proxyModule.Proxy) *errorStack.Error {
+func Start(port int64, appStderr *logrotorModule.LogWriter, manager *backendModule.Manager) *errorStack.Error {
     
     return httpserver.Start(port, func(out http.ResponseWriter, req *http.Request){
         
@@ -41,7 +40,7 @@ func Start(port int64, appStderr *logrotorModule.LogWriter, manager *backendModu
             
             //TODO - trzeba wyświetlić tą listę aplikacji
             mainPort   := manager.GetMainPort()
-            activePort := proxy.GetActive().Port()
+            activePort := manager.GetActiveBackend().Port()
             
             listBuild, errList := manager.GetListBuild()
             
@@ -79,7 +78,7 @@ func Start(port int64, appStderr *logrotorModule.LogWriter, manager *backendModu
         
             if port, _, isOk := nextUrl.MatchInt(); isOk {
                 
-                isOk := proxy.SwitchByNameAndPort(appName, port)
+                isOk := manager.SwitchByNameAndPort(appName, port)
                 
                 if isOk {
                     fmt.Fprint(out, layoutModule.GetRedirectMessage(2, "/", "Wyłączono poprawnie"))
@@ -95,7 +94,7 @@ func Start(port int64, appStderr *logrotorModule.LogWriter, manager *backendModu
         
             if port, _, isOk := nextUrl.MatchInt(); isOk {
                 
-                isOk := proxy.DownByNameAndPort(appName, port)
+                isOk := manager.DownByNameAndPort(appName, port)
                 
                 if isOk {
                     fmt.Fprint(out, layoutModule.GetRedirectMessage(2, "/", "Przełączono poprawnie"))

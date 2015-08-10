@@ -8,11 +8,10 @@ import (
     "fmt"
     "../errorStack"
     logrotorModule "../logrotor"
-    backendModule "../backend"
 )
 
 
-func Start(addr string, appStderr *logrotorModule.LogWriter, getBackend func() *backendModule.Backend) *errorStack.Error {
+func Start(addr string, appStderr *logrotorModule.LogWriter, getBackend func() (string, func(), func())) *errorStack.Error {
     
     addProxy, err1 := net.ResolveTCPAddr("tcp", addr)
     
@@ -39,7 +38,7 @@ func Start(addr string, appStderr *logrotorModule.LogWriter, getBackend func() *
                 
             } else {
                 
-                errConnectect := handleConn(getBackend(), conn)
+                errConnectect := handleConn(getBackend, conn)
                 
                 if errConnectect != nil {
                     
@@ -131,9 +130,11 @@ func (self *connectionFlag) Wait() {
 
 
 
-func handleConn(backend *backendModule.Backend, connIn *net.TCPConn) error {
+func handleConn(getBackend func() (string, func(), func()), connIn *net.TCPConn) error {
     
-    addrServer, errParse := net.ResolveTCPAddr("tcp", backend.GetAddr())
+    addr, incCounter, subCounter := getBackend()
+    
+    addrServer, errParse := net.ResolveTCPAddr("tcp", addr)   //backend.GetAddr()
     
     if errParse != nil {
         return errParse
@@ -147,12 +148,12 @@ func handleConn(backend *backendModule.Backend, connIn *net.TCPConn) error {
     
     
     go func(){
-
+        
         defer connIn.Close()
         defer connDest.Close()
 
-        backend.Inc()
-        defer backend.Sub()
+        incCounter()
+        defer subCounter()
         
         
         connFlag := newConnectionFlag()

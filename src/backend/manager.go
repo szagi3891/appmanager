@@ -14,10 +14,12 @@ import (
     utils "../utils"
     "io/ioutil"
     "fmt"
+    "../handleConn"
 )
 
 
 func Init(mainPort int, logrotor *logrotorModule.Manager,  appStdout, appStderr *logrotorModule.LogWriter, gocmd, pwd, buildDir, appMain, appUser, gopath string, portStart, portEnd int) (*Manager, *errorStack.Error) {
+    
     
     ports := map[int]*Backend{}
     
@@ -31,8 +33,9 @@ func Init(mainPort int, logrotor *logrotorModule.Manager,  appStdout, appStderr 
         return nil, errLookup
     }
     
-    return &Manager{
+    manager := Manager{
         mainPort  : mainPort,
+        //backend   : backend,
         logrotor  : logrotor,
         appStdout : appStdout,
         appStderr : appStderr,
@@ -45,7 +48,35 @@ func Init(mainPort int, logrotor *logrotorModule.Manager,  appStdout, appStderr 
         uid       : uid,
         gid       : gid,
         gopath    : gopath,
-    }, nil
+    }
+    
+    
+    backend, errStartLastBuild := manager.startLastBuild()
+    
+    if errStartLastBuild != nil {
+        return nil, errStartLastBuild
+    }
+    
+    manager.backend = backend
+    
+    
+    
+    addr := "127.0.0.1:" + strconv.FormatInt(int64(mainPort), 10)
+    
+    errStart := handleConn.Start(addr, appStderr, func() (string, func(), func()) {
+        
+        backend := manager.GetActiveBackend()
+        
+        return backend.GetAddr(), backend.Inc, backend.Sub
+    })
+    
+    if errStart != nil {
+        return nil, errStart
+    }
+    
+    
+    
+    return &manager, nil
 }
 
 
@@ -76,6 +107,7 @@ func lookupUser(appUser string) (uint32, uint32, *errorStack.Error) {
 
 type Manager struct {
     mainPort  int
+    backend   *Backend
     logrotor  *logrotorModule.Manager
     appStdout *logrotorModule.LogWriter
     appStderr *logrotorModule.LogWriter
@@ -91,17 +123,20 @@ type Manager struct {
     gopath    string
 }
 
-func (self *Manager) SwitchByNameAndPort(name string, port int) (*Backend, bool) {
+func (self *Manager) GetActiveBackend() *Backend {
+    return self.backend
+}
+
+func (self *Manager) SwitchByNameAndPort(name string, port int) bool {
     
     backend, isFind := self.ports[port]
     
     if isFind && backend != nil && backend.Name() == name {
-        //self.backend = backend
-        return backend, true
-        //return true
+        self.backend = backend
+        return true
     }
     
-    return nil, false
+    return false
 }
 
 func (self *Manager) DownByNameAndPort(name string, port int) bool {
@@ -331,7 +366,7 @@ func (self *Manager) GetListBuild() (*[]string, *errorStack.Error) {
 
 
 //startuje ostatniego builda, jeśli nie ma nic w katalogu z buildami to sobie tworzy takowego builda
-func (self *Manager) StartLastBuild() (*Backend, *errorStack.Error) {
+func (self *Manager) startLastBuild() (*Backend, *errorStack.Error) {
     
     list, errList := self.GetListBuild()
     

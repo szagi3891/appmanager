@@ -5,7 +5,6 @@ import (
     "os"
     "os/signal"
     "fmt"
-    proxyModule   "./proxy"
     backendModule "./backend"
     configModule "./config"
     logrotorModule "./logrotor"
@@ -99,17 +98,18 @@ func main(){
     //tylko obiektem proxy powinniśmy sterować żeby sobie wysterować to co trzeba
     
     
-    
-    proxy, errStart := proxyModule.New(appStderr, config.GetPortMain(), logrotor, managerBackend)
+    /*
+    errStart := proxyModule.New(appStderr, config.GetPortMain(), logrotor, managerBackend)
     
     if errStart != nil {
         panic(errStart)
     }
+    */
     
     
     
                         //start panelu do zarządzania konfiguracją proxy
-    wwwpanel.Start(8889, appStderr, managerBackend, proxy)
+    wwwpanel.Start(8889, appStderr, managerBackend)
     
     
     
