@@ -19,7 +19,7 @@ import (
 )
 
 
-func Init(config *configModule.File, logrotor *logrotorModule.Manager, appStdout, appStderr *logrotorModule.LogWriter) (*Manager, *errorStack.Error) {
+func Init(config *configModule.File, logrotor *logrotorModule.Manager, logs *logrotorModule.Logs) (*Manager, *errorStack.Error) {
     
     
     ports := map[int]*Backend{}
@@ -35,14 +35,13 @@ func Init(config *configModule.File, logrotor *logrotorModule.Manager, appStdout
     }
     
     manager := Manager{
-        config    : config,
+        config   : config,
         //backend   : backend,
-        logrotor  : logrotor,
-        appStdout : appStdout,
-        appStderr : appStderr,
-        ports     : ports,
-        uid       : uid,
-        gid       : gid,
+        logrotor : logrotor,
+        logs     : logs,
+        ports    : ports,
+        uid      : uid,
+        gid      : gid,
     }
     
     
@@ -58,7 +57,7 @@ func Init(config *configModule.File, logrotor *logrotorModule.Manager, appStdout
     
     addr := "127.0.0.1:" + strconv.FormatInt(int64(config.GetPortMain()), 10)
     
-    errStart := handleConn.Start(addr, appStderr, func() (string, func(), func()) {
+    errStart := handleConn.Start(addr, logs, func() (string, func(), func()) {
         
         backend := manager.GetActiveBackend()
         
@@ -101,15 +100,14 @@ func lookupUser(appUser string) (uint32, uint32, *errorStack.Error) {
 
 
 type Manager struct {
-    config    *configModule.File
-    backend   *Backend
-    logrotor  *logrotorModule.Manager
-    appStdout *logrotorModule.LogWriter
-    appStderr *logrotorModule.LogWriter
-    mutex     sync.Mutex
-    ports     map[int]*Backend
-    uid       uint32
-    gid       uint32
+    config   *configModule.File
+    backend  *Backend
+    logrotor *logrotorModule.Manager
+    logs     *logrotorModule.Logs
+    mutex    sync.Mutex
+    ports    map[int]*Backend
+    uid      uint32
+    gid      uint32
 }
 
 func (self *Manager) GetActiveBackend() *Backend {
@@ -230,9 +228,7 @@ func (self *Manager) createNewBackend(buildName string) (*Backend, *errorStack.E
                 addr    : "127.0.0.1",
                 port    : portIndex,
                 isClose : make(chan bool),
-                stdout  : self.logrotor.New(buildName, true),
-                stderr  : self.logrotor.New(buildName, false),
-                
+                logs    : self.logrotor.NewLogs(buildName),                
             }
             
             self.ports[portIndex] = &newBeckend
@@ -263,8 +259,8 @@ func (self *Manager) New(buildName string) (*Backend, *errorStack.Error) {
     cmd.SysProcAttr = &syscall.SysProcAttr{}
     cmd.SysProcAttr.Credential = &syscall.Credential{Uid: self.uid, Gid: self.gid}
     
-    cmd.Stdout = newBackend.stdout
-    cmd.Stderr = newBackend.stderr
+    cmd.Stdout = newBackend.logs.Std
+    cmd.Stderr = newBackend.logs.Err
     
 	err := cmd.Start()
     

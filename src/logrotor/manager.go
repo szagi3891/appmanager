@@ -23,8 +23,26 @@ type Manager struct {
     config *configModule.File
 }
 
+type Logs struct {
+    Std *logWriter
+    Err *logWriter
+}
 
-func (self *Manager) New(name string, stdout bool) *LogWriter {
+func (self *Logs) Stop() {
+    
+    self.Std.Stop()
+    self.Err.Stop()
+}
+
+func (self *Manager) NewLogs(name string) *Logs {
+    
+    return &Logs {
+        Std : self.newSingleLog(name, true),
+        Err : self.newSingleLog(name, false),
+    }
+}
+
+func (self *Manager) newSingleLog(name string, stdout bool) *logWriter {
     
     //stdout true  : .out
     //stdout false : .err

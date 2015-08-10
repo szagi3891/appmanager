@@ -66,14 +66,11 @@ func main(){
     }
     
     
-    //TODO - Trzeba zrobić jakaś strukturkę zbierającą te dwie struktury
-    
-                                                //logi aplikacji
-    appStdout := logrotor.New("appmanager", true)
-    appStderr := logrotor.New("appmanager", false)
+                                                //logi aplikacji    
+    logs := logrotor.NewLogs("appmanager")
     
     
-    managerBackend, errInitManager := backendModule.Init(config, logrotor, appStdout, appStderr)
+    managerBackend, errInitManager := backendModule.Init(config, logrotor, logs)
     
     
     if errInitManager != nil {
@@ -93,14 +90,10 @@ func main(){
     //zrobić obsługę zmiennej : rotatetotalsize
     //stare pliki z logami będą kasowane automatycznie żeby nie zapchać dysku
     
-    //obiekt menedżera backendu powinien być przykryty obiektem proxy
-    //tylko obiektem proxy powinniśmy sterować żeby sobie wysterować to co trzeba
-    
-    
     
     
                         //start panelu do zarządzania konfiguracją proxy
-    wwwpanel.Start(8889, appStderr, managerBackend)
+    wwwpanel.Start(8889, logs, managerBackend)
     
     
     

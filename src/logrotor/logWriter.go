@@ -7,20 +7,20 @@ import (
     "../applog"
 )
 
-func newLogWriter(pathFile string) *LogWriter {
+func newLogWriter(pathFile string) *logWriter {
     
     pipe    := make(chan *[]byte)
     isClose := make(chan bool)
     
     go runLogGroup(pipe, isClose, pathFile)
     
-    return &LogWriter{
+    return &logWriter{
         pipe    : pipe,
         isClose : isClose,
     }
 }
 
-type LogWriter struct {
+type logWriter struct {
     pipe    chan *[]byte
     isClose chan bool
 }
@@ -36,7 +36,7 @@ func copyArr(src *[]byte) *[]byte {
     return &cop
 }
 
-func (self *LogWriter) WriteString(p string) () {
+func (self *logWriter) WriteString(p string) () {
     
     //fmt.Println(p)
     
@@ -47,7 +47,7 @@ func (self *LogWriter) WriteString(p string) () {
     self.pipe <- p3
 }
 
-func (self *LogWriter) Write(p []byte) (n int, err error) {
+func (self *logWriter) Write(p []byte) (n int, err error) {
     
     //fmt.Println(string(p))
     
@@ -62,7 +62,7 @@ func (self *LogWriter) Write(p []byte) (n int, err error) {
 }
 
 
-func (self *LogWriter) Stop() {
+func (self *logWriter) Stop() {
     
     self.pipe <- nil
     

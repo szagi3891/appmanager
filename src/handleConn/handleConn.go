@@ -11,7 +11,7 @@ import (
 )
 
 
-func Start(addr string, appStderr *logrotorModule.LogWriter, getBackend func() (string, func(), func())) *errorStack.Error {
+func Start(addr string, logs *logrotorModule.Logs, getBackend func() (string, func(), func())) *errorStack.Error {
     
     addProxy, err1 := net.ResolveTCPAddr("tcp", addr)
     
@@ -34,7 +34,7 @@ func Start(addr string, appStderr *logrotorModule.LogWriter, getBackend func() (
 
             if errAccept != nil {
                 
-                appStderr.WriteString(errorStack.From(errAccept).String())
+                logs.Err.WriteString(errorStack.From(errAccept).String())
                 
             } else {
                 
@@ -42,7 +42,7 @@ func Start(addr string, appStderr *logrotorModule.LogWriter, getBackend func() (
                 
                 if errConnectect != nil {
                     
-                    appStderr.WriteString(errorStack.From(errConnectect).String())
+                    logs.Err.WriteString(errorStack.From(errConnectect).String())
                     
                 } else {
                     

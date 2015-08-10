@@ -19,8 +19,7 @@ type Backend struct {
     active  int
     process *os.Process
     isClose chan bool
-    stdout  *logrotorModule.LogWriter
-    stderr  *logrotorModule.LogWriter
+    logs    *logrotorModule.Logs
 }
 
 
@@ -63,8 +62,7 @@ func (self *Backend) Stop() {
                         //czekaj aż wszystkie powiązane procesy z tym procesem się zakończą
     <- self.isClose
     
-    self.stdout.Stop()
-    self.stderr.Stop()
+    self.logs.Stop()
 }
 
 func (self *Backend) Port() int {
