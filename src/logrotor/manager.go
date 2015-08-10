@@ -3,26 +3,24 @@ package logrotor
 import (
     "../errorStack"
     "../utils"
+    configModule "../config"
 )
 
-func Init(logDir string, rotatesize, rotatetime int) (*Manager, *errorStack.Error) {
+func Init(config *configModule.File) (*Manager, *errorStack.Error) {
     
     //TODO - wyszczególnij wszystkie pliki gz znajdujące się w katalogu z logami
     //przy robieniu nowego gz pliku trzeba dodać wynikowy rozmiar tego pliku do sumy zajętości całego katalogu
     
+    //, logDir string, rotatesize, rotatetime int
+    
     return &Manager{
-        logDir     : logDir,
-        rotatesize : rotatesize,
-        rotatetime : rotatetime,
-        
+        config : config,
     }, nil
 }
 
 
 type Manager struct {
-    logDir     string
-    rotatesize int
-    rotatetime int
+    config *configModule.File
 }
 
 
@@ -36,6 +34,7 @@ func (self *Manager) New(name string, stdout bool) *LogWriter {
     if stdout {
         ext = "out"
     }
+        //., config.GetRotatesize(), config.GetRotatetime())    logDir
     
-    return newLogWriter(self.logDir + "/" + name + "_" + utils.GetCurrentTimeName() + "." + ext)
+    return newLogWriter(self.config.GetLogDir() + "/" + name + "_" + utils.GetCurrentTimeName() + "." + ext)
 }

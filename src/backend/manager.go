@@ -15,39 +15,34 @@ import (
     "io/ioutil"
     "fmt"
     "../handleConn"
+    configModule "../config"
 )
 
 
-func Init(mainPort int, logrotor *logrotorModule.Manager,  appStdout, appStderr *logrotorModule.LogWriter, gocmd, pwd, buildDir, appMain, appUser, gopath string, portStart, portEnd int) (*Manager, *errorStack.Error) {
+func Init(config *configModule.File, logrotor *logrotorModule.Manager, appStdout, appStderr *logrotorModule.LogWriter) (*Manager, *errorStack.Error) {
     
     
     ports := map[int]*Backend{}
     
-    for i:=portStart; i<= portEnd; i++ {
+    for i:=config.GetPortFrom(); i<= config.GetPortTo(); i++ {
         ports[i] = nil
     }
     
-    uid, gid, errLookup := lookupUser(appUser)
+    uid, gid, errLookup := lookupUser(config.GetAppUser())
     
     if errLookup != nil {
         return nil, errLookup
     }
     
     manager := Manager{
-        mainPort  : mainPort,
+        config    : config,
         //backend   : backend,
         logrotor  : logrotor,
         appStdout : appStdout,
         appStderr : appStderr,
-        gocmd     : gocmd,
-        pwd       : pwd,
-        buildDir  : buildDir,
-        appMain   : appMain,
-        appUser   : appUser,
         ports     : ports,
         uid       : uid,
         gid       : gid,
-        gopath    : gopath,
     }
     
     
@@ -61,7 +56,7 @@ func Init(mainPort int, logrotor *logrotorModule.Manager,  appStdout, appStderr 
     
     
     
-    addr := "127.0.0.1:" + strconv.FormatInt(int64(mainPort), 10)
+    addr := "127.0.0.1:" + strconv.FormatInt(int64(config.GetPortMain()), 10)
     
     errStart := handleConn.Start(addr, appStderr, func() (string, func(), func()) {
         
@@ -106,21 +101,15 @@ func lookupUser(appUser string) (uint32, uint32, *errorStack.Error) {
 
 
 type Manager struct {
-    mainPort  int
+    config    *configModule.File
     backend   *Backend
     logrotor  *logrotorModule.Manager
     appStdout *logrotorModule.LogWriter
     appStderr *logrotorModule.LogWriter
-    gocmd     string
     mutex     sync.Mutex
-    pwd       string
-    buildDir  string
-    appMain   string
-    appUser   string
     ports     map[int]*Backend
     uid       uint32
     gid       uint32
-    gopath    string
 }
 
 func (self *Manager) GetActiveBackend() *Backend {
@@ -157,14 +146,14 @@ func (self *Manager) DownByNameAndPort(name string, port int) bool {
 }
 
 func (self *Manager) GetMainPort() int {
-    return self.mainPort
+    return self.config.GetPortMain()
 }
 
 func (self *Manager) GetSha1Repo() (string, *errorStack.Error) {
     
     cmd := exec.Command("git", "rev-parse", "HEAD")
     
-    cmd.Dir = self.pwd
+    cmd.Dir = self.config.GetAppDir()
     
     var stderr bytes.Buffer
 	var stdout bytes.Buffer
@@ -201,10 +190,10 @@ func (self *Manager) MakeBuild() (string, *errorStack.Error) {
     
     
     //cmd := exec.Command(self.gocmd, "build", "-race", "-o", self.buildDir + "/" + buildName, self.appMain)
-    cmd := exec.Command(self.gocmd, "build", "-o", self.buildDir + "/" + buildName, self.appMain)
+    cmd := exec.Command(self.config.GetGoCmd(), "build", "-o", self.config.GetBuildDir() + "/" + buildName, self.config.GetAppMain())
     
-    cmd.Dir = self.pwd
-    cmd.Env = []string{"GOPATH=" + self.gopath}
+    cmd.Dir = self.config.GetAppDir()
+    cmd.Env = []string{"GOPATH=" + self.config.GetGopath()}
     
     var bufOut bytes.Buffer
     var bufErr bytes.Buffer
@@ -264,11 +253,11 @@ func (self *Manager) New(buildName string) (*Backend, *errorStack.Error) {
         return nil, errCerate
     }
     
-    buildPath := self.buildDir + "/" + buildName
+    buildPath := self.config.GetBuildDir() + "/" + buildName
     
     cmd := exec.Command(buildPath, strconv.FormatInt(int64(newBackend.port), 10))
     
-    cmd.Dir = self.pwd
+    cmd.Dir = self.config.GetAppDir()
     
                                                     //uruchomienie na koncie określonego użytkownika
     cmd.SysProcAttr = &syscall.SysProcAttr{}
@@ -344,7 +333,7 @@ func (self *Manager) GetAppList() *[]*AppInfo {
 func (self *Manager) GetListBuild() (*[]string, *errorStack.Error) {
     
     
-    list, errList := ioutil.ReadDir(self.buildDir)
+    list, errList := ioutil.ReadDir(self.config.GetBuildDir())
     
     if errList != nil {
         return nil, errorStack.From(errList)

@@ -57,7 +57,7 @@ func main(){
     //lsof -i - coś podobnego
     
     
-    logrotor, errLogrotor := logrotorModule.Init(config.GetLogDir(), config.GetRotatesize(), config.GetRotatetime())
+    logrotor, errLogrotor := logrotorModule.Init(config)
     
     if errLogrotor != nil {
         
@@ -73,8 +73,7 @@ func main(){
     appStderr := logrotor.New("appmanager", false)
     
     
-    
-    managerBackend, errInitManager := backendModule.Init(config.GetPortMain(), logrotor, appStdout, appStderr, config.GetGoCmd(), config.GetAppDir(), config.GetBuildDir(), config.GetAppMain(), config.GetAppUser(), config.GetGopath(), config.GetPortFrom(), config.GetPortTo())
+    managerBackend, errInitManager := backendModule.Init(config, logrotor, appStdout, appStderr)
     
     
     if errInitManager != nil {
@@ -97,14 +96,6 @@ func main(){
     //obiekt menedżera backendu powinien być przykryty obiektem proxy
     //tylko obiektem proxy powinniśmy sterować żeby sobie wysterować to co trzeba
     
-    
-    /*
-    errStart := proxyModule.New(appStderr, config.GetPortMain(), logrotor, managerBackend)
-    
-    if errStart != nil {
-        panic(errStart)
-    }
-    */
     
     
     
