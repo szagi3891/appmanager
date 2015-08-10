@@ -11,8 +11,6 @@ import (
 
 
 type Proxy struct {
-    mainPort  int
-    appStderr *logrotorModule.LogWriter
     manager   *backendModule.Manager
     backend   *backendModule.Backend
 }
@@ -32,8 +30,6 @@ func New(appStderr *logrotorModule.LogWriter, mainPort int, logrotor *logrotorMo
     
     
     proxy := &Proxy{
-        mainPort  : mainPort,
-        appStderr : appStderr,
         manager   : manager,
         backend   : backend,
     }
@@ -50,9 +46,6 @@ func New(appStderr *logrotorModule.LogWriter, mainPort int, logrotor *logrotorMo
     return proxy, nil
 }
 
-func (self *Proxy) GetMainPort() int {
-    return self.mainPort
-}
 
 func (self *Proxy) GetActive() *backendModule.Backend {
     return self.backend

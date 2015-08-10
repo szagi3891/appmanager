@@ -40,7 +40,7 @@ func Start(port int64, appStderr *logrotorModule.LogWriter, manager *backendModu
             //proxy.GetActiveBackend()
             
             //TODO - trzeba wyświetlić tą listę aplikacji
-            mainPort   := proxy.GetMainPort()
+            mainPort   := manager.GetMainPort()
             activePort := proxy.GetActive().Port()
             
             listBuild, errList := manager.GetListBuild()

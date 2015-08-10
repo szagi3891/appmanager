@@ -17,7 +17,7 @@ import (
 )
 
 
-func Init(logrotor *logrotorModule.Manager,  appStdout, appStderr *logrotorModule.LogWriter, gocmd, pwd, buildDir, appMain, appUser, gopath string, portStart, portEnd int) (*Manager, *errorStack.Error) {
+func Init(mainPort int, logrotor *logrotorModule.Manager,  appStdout, appStderr *logrotorModule.LogWriter, gocmd, pwd, buildDir, appMain, appUser, gopath string, portStart, portEnd int) (*Manager, *errorStack.Error) {
     
     ports := map[int]*Backend{}
     
@@ -32,6 +32,7 @@ func Init(logrotor *logrotorModule.Manager,  appStdout, appStderr *logrotorModul
     }
     
     return &Manager{
+        mainPort  : mainPort,
         logrotor  : logrotor,
         appStdout : appStdout,
         appStderr : appStderr,
@@ -74,6 +75,7 @@ func lookupUser(appUser string) (uint32, uint32, *errorStack.Error) {
 
 
 type Manager struct {
+    mainPort  int
     logrotor  *logrotorModule.Manager
     appStdout *logrotorModule.LogWriter
     appStderr *logrotorModule.LogWriter
@@ -117,6 +119,10 @@ func (self *Manager) DownByNameAndPort(name string, port int) bool {
     }
     
     return false
+}
+
+func (self *Manager) GetMainPort() int {
+    return self.mainPort
 }
 
 func (self *Manager) GetSha1Repo() (string, *errorStack.Error) {

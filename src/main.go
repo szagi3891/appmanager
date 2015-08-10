@@ -75,7 +75,7 @@ func main(){
     
     
     
-    managerBackend, errInitManager := backendModule.Init(logrotor, appStdout, appStderr, config.GetGoCmd(), config.GetAppDir(), config.GetBuildDir(), config.GetAppMain(), config.GetAppUser(), config.GetGopath(), config.GetPortFrom(), config.GetPortTo())
+    managerBackend, errInitManager := backendModule.Init(config.GetPortMain(), logrotor, appStdout, appStderr, config.GetGoCmd(), config.GetAppDir(), config.GetBuildDir(), config.GetAppMain(), config.GetAppUser(), config.GetGopath(), config.GetPortFrom(), config.GetPortTo())
     
     
     if errInitManager != nil {
