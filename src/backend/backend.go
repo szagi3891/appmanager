@@ -2,47 +2,59 @@ package backend
 
 
 import (
-    "os"
-    "sync"
-    "fmt"
+    //"os"
+    "os/exec"
     "strconv"
+    "fmt"
+    "syscall"
+    "../errorStack"
     logrotorModule "../logrotor"
 )
 
 
 type Backend struct {
-    name    string
-    stop    bool
-    addr    string
-    port    int
-    mutex   *sync.Mutex
-    active  int
-    process *os.Process
-    isClose chan bool
-    logs    *logrotorModule.Logs
+    name string
+    addr string
+    port int
+    cmd  *exec.Cmd
+    logs *logrotorModule.Logs
+    //process *os.Process
 }
 
-
-func (self *Backend) checkStrop() {
+func newBackend(buildDir, buildName, appDir string, uid, gid uint32, port int, logs *logrotorModule.Logs) (*Backend, *errorStack.Error) {
     
-    self.mutex.Lock()
-    self.mutex.Unlock()
-    
-    if self.stop == true && self.active == 0 {
-        
-        if self.process != nil {
-            
-            close(self.isClose)
-            
-            errKill := self.process.Kill()
-            
-            if errKill != nil {
-                fmt.Println(errKill)
-            }
-            
-            self.process = nil
-        }
+    newBackend := Backend{
+        name    : buildName,
+        addr    : "127.0.0.1",
+        port    : port,
+        logs    : logs,
     }
+    
+    
+    buildPath := buildDir + "/" + buildName
+    
+    cmd := exec.Command(buildPath, strconv.FormatInt(int64(newBackend.port), 10))
+    
+    cmd.Dir = appDir
+    
+                                                    //uruchomienie na koncie określonego użytkownika
+    cmd.SysProcAttr = &syscall.SysProcAttr{}
+    cmd.SysProcAttr.Credential = &syscall.Credential{Uid: uid, Gid: gid}
+    
+    cmd.Stdout = newBackend.logs.Std
+    cmd.Stderr = newBackend.logs.Err
+    
+	err := cmd.Start()
+    
+    if err != nil {
+        return nil, errorStack.From(err)
+	}
+    
+    //newBackend.process = cmd.Process
+    newBackend.cmd = cmd
+    
+    
+    return &newBackend, nil
 }
 
 func (self *Backend) Name() string {
@@ -51,53 +63,39 @@ func (self *Backend) Name() string {
 
 func (self *Backend) Stop() {
     
-    self.mutex.Lock()    
-    self.stop = true
-    self.mutex.Unlock()
+    errKill := self.cmd.Process.Kill()
+
+    
+    //syscall.Kill(self.process.Pid, syscall.SIGINT)
+    
+    
+    if errKill != nil {
+        fmt.Println(errKill)
+    }
+    
+                        //czekaj aż się zakończy ten proces
+    self.cmd.Wait()
     
     self.logs.Stop()
     
-    self.checkStrop()
-    
-                        //czekaj aż wszystkie powiązane procesy z tym procesem się zakończą
-    <- self.isClose
-    
 }
+
+
+func (self *Backend) Active() int {
+    
+    //TODO - trzeba jakoś czytać informację o ilości aktywnych połączeń do tego backendu
+    return 0
+}
+
 
 func (self *Backend) Port() int {
     return self.port
 }
 
-func (self *Backend) Active() int {
-    
-    return self.active
-}
 
 func (self *Backend) GetAddr() string {
     
     return self.addr + ":" + strconv.FormatInt(int64(self.port), 10)
 }
 
-func (self *Backend) Inc() {
-    
-    self.mutex.Lock()
-    
-    if self.stop == true {
-        panic("TODO - blokada kolejnych połączeń na ten adres")
-    }
-    
-    self.active++
-    fmt.Println("nowe połączenie: ", self.addr, " active: ", self.active)
-	self.mutex.Unlock()
-}
-
-func (self *Backend) Sub() {
-    
-    self.mutex.Lock()
-    self.active--
-    fmt.Println("zamykam        : ", self.addr, " active: ", self.active)
-	self.mutex.Unlock()
-    
-    self.checkStrop()
-}
 

@@ -97,9 +97,9 @@ func Start(port int64, logs *logrotorModule.Logs, manager *backendModule.Manager
                 isOk := manager.DownByNameAndPort(appName, port)
                 
                 if isOk {
-                    fmt.Fprint(out, layoutModule.GetRedirectMessage(2, "/", "Przełączono poprawnie"))
+                    fmt.Fprint(out, layoutModule.GetRedirectMessage(2, "/", "Wyłączono poprawnie"))
                 } else {
-                    fmt.Fprint(out, layoutModule.GetRedirectMessage(2, "/", "Nieprzełączono"))
+                    fmt.Fprint(out, layoutModule.GetRedirectMessage(2, "/", "Niewyłączono"))
                 }
                 
                 return

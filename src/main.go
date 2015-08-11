@@ -88,6 +88,11 @@ func run() int {
     //http://jan.newmarch.name/go/http/chapter-http.html
     
     
+    
+    //netstat -an | grep 81.4.110.247:80
+        //tak można sprawdzić ilość połączeń przychodzących na dany port
+    
+    
                         //start panelu do zarządzania konfiguracją proxy
     go wwwpanel.Start(8889, logs, managerBackend)
     

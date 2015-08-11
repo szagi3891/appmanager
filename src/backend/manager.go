@@ -8,7 +8,6 @@ import (
     "bytes"
     "sort"
     userModule "os/user"
-    "syscall"
     "../errorStack"
     logrotorModule "../logrotor"
     utils "../utils"
@@ -165,7 +164,7 @@ func (self *Manager) DownByNameAndPort(name string, port int) bool {
     
     if isFind && backend != nil && backend.Name() == name {
         
-        delete(self.ports, port)
+        self.ports[port] = nil
         
         backend.Stop()
         return true
@@ -254,18 +253,15 @@ func (self *Manager) createNewBackend(buildName string) (*Backend, *errorStack.E
         
         if value == nil {
             
-            newBeckend := Backend{
-                name    : buildName,
-                addr    : "127.0.0.1",
-                port    : portIndex,
-                mutex   : &sync.Mutex{},
-                isClose : make(chan bool),
-                logs    : self.logrotor.NewLogs(buildName),                
+            newBeckend, errCreate := newBackend(self.config.GetBuildDir(), buildName, self.config.GetAppDir(), self.uid, self.gid, portIndex, self.logrotor.NewLogs(buildName))
+            
+            if errCreate != nil {
+                return nil, errCreate
             }
             
-            self.ports[portIndex] = &newBeckend
+            self.ports[portIndex] = newBeckend
             
-            return &newBeckend, nil
+            return newBeckend, nil
         }
     }
     
@@ -280,27 +276,6 @@ func (self *Manager) New(buildName string) (*Backend, *errorStack.Error) {
     if errCerate != nil {
         return nil, errCerate
     }
-    
-    buildPath := self.config.GetBuildDir() + "/" + buildName
-    
-    cmd := exec.Command(buildPath, strconv.FormatInt(int64(newBackend.port), 10))
-    
-    cmd.Dir = self.config.GetAppDir()
-    
-                                                    //uruchomienie na koncie określonego użytkownika
-    cmd.SysProcAttr = &syscall.SysProcAttr{}
-    cmd.SysProcAttr.Credential = &syscall.Credential{Uid: self.uid, Gid: self.gid}
-    
-    cmd.Stdout = newBackend.logs.Std
-    cmd.Stderr = newBackend.logs.Err
-    
-	err := cmd.Start()
-    
-    if err != nil {
-        return nil, errorStack.From(err)
-	}
-    
-    newBackend.process = cmd.Process
     
     return newBackend, nil
 }
