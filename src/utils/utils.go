@@ -3,7 +3,11 @@ package utils
 
 import (
     "time"
+    "bytes"
     "strconv"
+    "os/exec"
+    "strings"
+    "../errorStack"
 )
 
 func GetCurrentTimeName() string {
@@ -31,3 +35,27 @@ func frm(liczba int, digit int) string {
     return out
 }
 
+func ExecCommand(confRun string) (string, *errorStack.Error) {
+    
+    confRunSlice := strings.Fields(confRun)
+        
+    cmd := exec.Command(confRunSlice[0], confRunSlice[1:]...)
+    
+    var bufOut bytes.Buffer
+    var bufErr bytes.Buffer
+    
+	cmd.Stdout = &bufOut
+	cmd.Stderr = &bufErr
+    
+	err := cmd.Run()
+    
+    if err != nil {
+        return "", errorStack.From(err)
+	}
+    
+    if bufErr.String() != "" {
+        return "", errorStack.Create("Na stumieniu błędów znalazły się jakieś dane: " + bufErr.String())
+    }
+    
+    return bufOut.String(), nil
+}

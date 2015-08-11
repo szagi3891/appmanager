@@ -1,7 +1,6 @@
 package logrotor
 
 import (
-    "fmt"
     "os"
     "../errorStack"
     "../applog"
@@ -38,8 +37,6 @@ func copyArr(src *[]byte) *[]byte {
 
 func (self *logWriter) WriteStringLn(p string) () {
     
-    //fmt.Println(p)
-    
     p2 := []byte(p + "\n")
     
     p3 := copyArr(&p2)
@@ -50,9 +47,6 @@ func (self *logWriter) WriteStringLn(p string) () {
 
 //to dla applikacji które przekazują nam swoje uformowane logi
 func (self *logWriter) Write(p []byte) (n int, err error) {
-    
-    //fmt.Println(string(p))
-    
     
     p3 := copyArr(&p)
     
@@ -92,18 +86,14 @@ func runLogGroup(pipe chan *[]byte, isClose chan bool, pathFile string) {
     
     
     reciveData := func(newData *[]byte) bool {
-
+        
         if newData == nil {
             
-            fmt.Println("Otrzymałem nil-a - trzeba zamknąć tego loga - wysyłam resztki z bufora")
-            
+                                    //wyślij resztki
             sendToFile <- buf
+                                    //zakończ działanie
+            sendToFile <- nil
             
-            fmt.Println("Otrzymałem nil-a - trzeba zamknąć tego loga - teraz wysyłam nila")
-            
-            sendToFile <- nil       //zakończ działanie
-
-            fmt.Println("Otrzymałem nil-a - trzeba zamknąć tego loga - się wreszcie zamykam")
             close(isClose)
             return true
 
@@ -146,6 +136,19 @@ func runLogGroup(pipe chan *[]byte, isClose chan bool, pathFile string) {
     }
 }
 
+func openFile(pathFile string) *os.File {
+    
+    fileNew, errCreate := os.OpenFile(pathFile, os.O_APPEND | os.O_CREATE | os.O_WRONLY, 0600)
+
+    if errCreate != nil {
+
+        applog.WriteErrLn(errorStack.From(errCreate).String())
+        return nil
+    }
+    
+    return fileNew
+}
+
 
 func SaveData(pathFile string, saveIn chan []*[]byte, isCloseWriter chan bool) {
     
@@ -155,20 +158,6 @@ func SaveData(pathFile string, saveIn chan []*[]byte, isCloseWriter chan bool) {
     for {
         
         newData := <- saveIn
-        
-        
-        if file == nil {
-            
-            fileNew, errCreate := os.OpenFile(pathFile, os.O_APPEND | os.O_CREATE | os.O_WRONLY, 0600)
-            
-            if errCreate != nil {
-                
-                applog.WriteErrLn(errorStack.From(errCreate).String())
-                return
-            }
-            
-            file = fileNew
-        }
         
         
         if newData == nil {
@@ -185,7 +174,19 @@ func SaveData(pathFile string, saveIn chan []*[]byte, isCloseWriter chan bool) {
         
         for _, chankData := range newData {
             
-            fmt.Print(string(*chankData))
+            
+            if file == nil {
+                
+                fileNew := openFile(pathFile)
+                
+                if fileNew == nil {
+                    return
+                }
+                
+                file = fileNew
+            }
+            
+            
             n, err := file.Write(*chankData)
             
             if err != nil {

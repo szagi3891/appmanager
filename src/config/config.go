@@ -24,6 +24,10 @@ type File struct {
     gopath     string
     rotatesize int
     rotatetime int
+    
+    conf_tpl   string
+    conf_dest  string
+    conf_run   string
 }
 
 
@@ -174,6 +178,33 @@ func Parse(path string) (*File, *errorStack.Error) {
     
     
     
+    conf_tpl, errConfTpl := getFromMap(&mapConfig, "conf_tpl", pathBase)
+    
+    if errConfTpl != nil {
+        return nil, errConfTpl
+    }
+    
+    configFile.conf_tpl = conf_tpl
+    
+    
+    conf_dest, errConfDest := getFromMap(&mapConfig, "conf_dest", pathBase)
+    
+    if errConfDest != nil {
+        return nil, errConfDest
+    }
+    
+    configFile.conf_dest = conf_dest
+    
+    
+    conf_run, errConfRun := getFromMap(&mapConfig, "conf_run", pathBase)
+    
+    if errConfRun != nil {
+        return nil, errConfRun
+    }
+    
+    configFile.conf_run = conf_run
+    
+    
     return &configFile, nil
 }
 
@@ -193,6 +224,18 @@ func checkDirectory(path string) *errorStack.Error {
 	}
     
     return nil
+}
+
+func (self *File) GetConfTpl() string {
+    return self.conf_tpl
+}
+
+func (self *File) GetConfDest() string {
+    return self.conf_dest
+}
+    
+func (self *File) GetConfRun() string {
+    return self.conf_run
 }
 
 func (self *File) GetRotatesize() int {

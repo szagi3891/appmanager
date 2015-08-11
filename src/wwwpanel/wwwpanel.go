@@ -145,7 +145,7 @@ func Start(port int64, logs *logrotorModule.Logs, manager *backendModule.Manager
             
             if isAvailableNewCommit {
                 
-                newName, errMake := manager.MakeBuild()
+                newName, _, errMake := manager.MakeBuild()
                 
                 if errMake == nil {
                     

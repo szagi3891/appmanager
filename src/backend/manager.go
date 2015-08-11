@@ -13,9 +13,10 @@ import (
     logrotorModule "../logrotor"
     utils "../utils"
     "io/ioutil"
-    "fmt"
-    "../handleConn"
+    //"../handleConn"           //potrzebne w przpadku przekierowania całego połączenia
+    "../handleNginex"       //sterowanie konfiguracją ngine-xa
     configModule "../config"
+    //"fmt"
 )
 
 
@@ -39,6 +40,7 @@ func Init(config *configModule.File, logrotor *logrotorModule.Manager, logs *log
         //backend   : backend,
         logrotor : logrotor,
         logs     : logs,
+        mutex    : &sync.Mutex{},
         ports    : ports,
         uid      : uid,
         gid      : gid,
@@ -54,7 +56,9 @@ func Init(config *configModule.File, logrotor *logrotorModule.Manager, logs *log
     manager.backend = backend
     
     
+    handleNginex.Switch(manager.backend.Port(), config.GetConfTpl(), config.GetConfDest(), config.GetConfRun())
     
+    /*
     addr := "127.0.0.1:" + strconv.FormatInt(int64(config.GetPortMain()), 10)
     
     errStart := handleConn.Start(addr, logs, func() (string, func(), func()) {
@@ -67,7 +71,7 @@ func Init(config *configModule.File, logrotor *logrotorModule.Manager, logs *log
     if errStart != nil {
         return nil, errStart
     }
-    
+    */
     
     
     return &manager, nil
@@ -104,10 +108,27 @@ type Manager struct {
     backend  *Backend
     logrotor *logrotorModule.Manager
     logs     *logrotorModule.Logs
-    mutex    sync.Mutex
+    mutex    *sync.Mutex
     ports    map[int]*Backend
     uid      uint32
     gid      uint32
+}
+
+func (self *Manager) Stop() {
+    
+    self.mutex.Lock()
+    defer self.mutex.Unlock()
+    
+    for port, backend := range self.ports {
+        
+        if backend != nil {
+            
+            backend.Stop()
+            self.ports[port] = nil
+        }
+    }
+    
+    self.backend = nil
 }
 
 func (self *Manager) GetActiveBackend() *Backend {
@@ -116,10 +137,17 @@ func (self *Manager) GetActiveBackend() *Backend {
 
 func (self *Manager) SwitchByNameAndPort(name string, port int) bool {
     
+    self.mutex.Lock()
+    defer self.mutex.Unlock()
+    
     backend, isFind := self.ports[port]
     
     if isFind && backend != nil && backend.Name() == name {
+        
         self.backend = backend
+        
+        handleNginex.Switch(self.backend.Port(), self.config.GetConfTpl(), self.config.GetConfDest(), self.config.GetConfRun())
+        
         return true
     }
     
@@ -128,7 +156,10 @@ func (self *Manager) SwitchByNameAndPort(name string, port int) bool {
 
 func (self *Manager) DownByNameAndPort(name string, port int) bool {
     
-    //trzeba wprowadzić mutex
+
+    self.mutex.Lock()
+    defer self.mutex.Unlock()
+    
     
     backend, isFind := self.ports[port]
     
@@ -174,13 +205,14 @@ func (self *Manager) GetSha1Repo() (string, *errorStack.Error) {
     return "", errorStack.Create("Zbyt mała odpowiedź")
 }
 
-
-func (self *Manager) MakeBuild() (string, *errorStack.Error) {
+//zwracane wartości
+//nazwa builda, std, errorStack.Error
+func (self *Manager) MakeBuild() (string, string, *errorStack.Error) {
     
     repoSha1, errRepo := self.GetSha1Repo()
     
     if errRepo != nil {
-        return "", errRepo
+        return "", "", errRepo
     }
     
     
@@ -201,16 +233,15 @@ func (self *Manager) MakeBuild() (string, *errorStack.Error) {
     
 	err := cmd.Run()
     
-    fmt.Println(bufOut.String())
-    fmt.Println(bufErr.String())
-    
-    //panic("TODO - wyniki działania programu z bufora trzeba przepchnąć do loga")
-    
     if err != nil {
-        return "", errorStack.From(err)
+        return "", "", errorStack.From(err)
 	}
     
-    return buildName, nil
+    if bufErr.String() != "" {
+        return "", "", errorStack.Create("Na stumieniu błędów znalazły się jakieś dane: " + bufErr.String())
+    }
+    
+    return buildName, bufOut.String(), nil
 }
 
 
@@ -227,6 +258,7 @@ func (self *Manager) createNewBackend(buildName string) (*Backend, *errorStack.E
                 name    : buildName,
                 addr    : "127.0.0.1",
                 port    : portIndex,
+                mutex   : &sync.Mutex{},
                 isClose : make(chan bool),
                 logs    : self.logrotor.NewLogs(buildName),                
             }
@@ -367,7 +399,7 @@ func (self *Manager) startLastBuild() (*Backend, *errorStack.Error) {
         
     } else {
         
-        newBuildName, errBuild := self.MakeBuild()
+        newBuildName, _, errBuild := self.MakeBuild()
         
         if errBuild != nil {
             return nil, errBuild

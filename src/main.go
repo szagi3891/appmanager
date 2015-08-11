@@ -20,7 +20,7 @@ func main(){
 }
 
 func run() int {
-    
+    fmt.Println("DEBUG: start app")
     if len(os.Args) != 2 {
         fmt.Println("Spodziewano się dokładnie dwóch parametrów")
         return 1
@@ -66,8 +66,7 @@ func run() int {
         return 1
     }
     
-    //TODO - tutaj można zrobić :
-    //defer managerBackend.Stop()
+    defer managerBackend.Stop()
     
     
     

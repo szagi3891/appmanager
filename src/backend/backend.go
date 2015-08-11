@@ -15,7 +15,7 @@ type Backend struct {
     stop    bool
     addr    string
     port    int
-    mutex   sync.Mutex
+    mutex   *sync.Mutex
     active  int
     process *os.Process
     isClose chan bool
@@ -33,8 +33,6 @@ func (self *Backend) checkStrop() {
         if self.process != nil {
             
             close(self.isClose)
-            
-            fmt.Println("zlecam morderstwo ...")
             
             errKill := self.process.Kill()
             
@@ -57,12 +55,13 @@ func (self *Backend) Stop() {
     self.stop = true
     self.mutex.Unlock()
     
+    self.logs.Stop()
+    
     self.checkStrop()
     
                         //czekaj aż wszystkie powiązane procesy z tym procesem się zakończą
     <- self.isClose
     
-    self.logs.Stop()
 }
 
 func (self *Backend) Port() int {

@@ -30,15 +30,17 @@ type Logs struct {
 
 func (self *Logs) Stop() {
     
+    self.Std.WriteStringLn("zamykam dyskryptor pliku z logami")
+    
     self.Std.Stop()
     self.Err.Stop()
 }
 
-func (self *Manager) NewLogs(name string) *Logs {
+func (self *Manager) NewLogs(path string) *Logs {
     
     return &Logs {
-        Std : self.newSingleLog(name, true),
-        Err : self.newSingleLog(name, false),
+        Std  : self.newSingleLog(path, true),
+        Err  : self.newSingleLog(path, false),
     }
 }
 
