@@ -68,7 +68,7 @@ func run() int {
     
     //TODO - tutaj można zrobić :
     //defer managerBackend.Stop()
-        
+    
     
     
     //TODO - zrobić pingowanie w nowy beckend, gotowość dopiero ma zgłosić jeśli będzie odpowiadał na zadanym porcie
@@ -80,6 +80,13 @@ func run() int {
     //zrobić obsługę zmiennej : rotatetotalsize
     //stare pliki z logami będą kasowane automatycznie żeby nie zapchać dysku
     
+    
+                //TODO - ten sposób proxowania trzeba będzie zaimplementować
+    //sposób na fajne proxowanie http
+    //http://siberianlaika.ru/node/29/
+    
+    //wypaśnie o serwerach http ...
+    //http://jan.newmarch.name/go/http/chapter-http.html
     
     
                         //start panelu do zarządzania konfiguracją proxy
