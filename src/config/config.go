@@ -21,7 +21,6 @@ type File struct {
     goCmd      string
     appMain    string
     appUser    string
-    gopath     string
     rotatesize int
     rotatetime int
     
@@ -166,14 +165,6 @@ func Parse(path string) (*File, *errorStack.Error) {
     
     configFile.appUser = appUser
     
-    
-    gopath, errGopath := getFromMap(&mapConfig, "gopath", pathBase)
-    
-    if errGopath != nil {
-        return nil, errGopath
-    }
-    
-    configFile.gopath = gopath
    
     
     
@@ -250,11 +241,6 @@ func (self *File) GetRotatetime() int {
 
 func (self *File) GetPortMain() int {
     return self.portMain
-}
-
-func (self *File) GetGopath() string {
-    
-    return self.gopath
 }
 
 func (self *File) GetAppUser() string {

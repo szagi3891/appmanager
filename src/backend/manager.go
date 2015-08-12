@@ -15,7 +15,6 @@ import (
     //"../handleConn"           //potrzebne w przpadku przekierowania całego połączenia
     "../handleNginex"       //sterowanie konfiguracją ngine-xa
     configModule "../config"
-    //"fmt"
 )
 
 
@@ -76,7 +75,6 @@ func Init(config *configModule.File, logrotor *logrotorModule.Manager, logs *log
     return &manager, nil
 }
 
-
 func lookupUser(appUser string) (uint32, uint32, *errorStack.Error) {
     
     userDetail, errLookup := userModule.Lookup(appUser)
@@ -99,8 +97,6 @@ func lookupUser(appUser string) (uint32, uint32, *errorStack.Error) {
     
     return uint32(uid), uint32(gid), nil
 }
-    
-
 
 type Manager struct {
     config   *configModule.File
@@ -217,12 +213,13 @@ func (self *Manager) MakeBuild() (string, string, *errorStack.Error) {
     
     buildName := "build_" + utils.GetCurrentTimeName()  + "_" + repoSha1
     
+    goEnv, goCommand := utils.ExtractEnvVarible(self.config.GetGoCmd())
     
     //cmd := exec.Command(self.gocmd, "build", "-race", "-o", self.buildDir + "/" + buildName, self.appMain)
-    cmd := exec.Command(self.config.GetGoCmd(), "build", "-o", self.config.GetBuildDir() + "/" + buildName, self.config.GetAppMain())
+    cmd := exec.Command(goCommand, "build", "-o", self.config.GetBuildDir() + "/" + buildName, self.config.GetAppMain())
     
     cmd.Dir = self.config.GetAppDir()
-    cmd.Env = []string{"GOPATH=" + self.config.GetGopath()}
+    cmd.Env = goEnv
     
     var bufOut bytes.Buffer
     var bufErr bytes.Buffer
