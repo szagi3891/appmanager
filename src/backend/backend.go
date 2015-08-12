@@ -7,6 +7,8 @@ import (
     "strconv"
     "fmt"
     "syscall"
+    "net"
+    "time"
     "../errorStack"
     logrotorModule "../logrotor"
 )
@@ -50,11 +52,33 @@ func newBackend(buildDir, buildName, appDir string, uid, gid uint32, port int, l
         return nil, errorStack.From(err)
 	}
     
-    //newBackend.process = cmd.Process
+    
     newBackend.cmd = cmd
     
     
-    return &newBackend, nil
+    
+    //pingować na nowo wstającą aplikację pod kątem gotowości jej portu
+    
+    for i:=0; i<10; i++ {
+        
+        _, errTest := net.Dial("tcp", newBackend.GetAddr())
+        
+        if errTest == nil {
+            
+            return &newBackend, nil
+            
+        } else {
+            
+            //problem z połączeniem się do nowego backendu
+        }
+        
+        time.Sleep(time.Second)
+    }
+    
+    newBackend.Stop()
+    
+    return nil, errorStack.Create("Uruchomiony proces nie wystawił serwera na żądanym porcie")
+    
 }
 
 func (self *Backend) Name() string {

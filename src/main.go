@@ -20,7 +20,9 @@ func main(){
 }
 
 func run() int {
+    
     fmt.Println("DEBUG: start app")
+    
     if len(os.Args) != 2 {
         fmt.Println("Spodziewano się dokładnie dwóch parametrów")
         return 1
@@ -68,9 +70,6 @@ func run() int {
     
     defer managerBackend.Stop()
     
-    
-    
-    //TODO - zrobić pingowanie w nowy beckend, gotowość dopiero ma zgłosić jeśli będzie odpowiadał na zadanym porcie
     
     //TODO - zrobić rotowanie i gzipowanie logów
     
@@ -120,22 +119,7 @@ func run() int {
     
     signalInterrupt := make(chan os.Signal, 1)
     signal.Notify(signalInterrupt, os.Interrupt)
-    
-    
-    for sig := range signalInterrupt {
-        // sig is a ^C, handle it
-        
-                                        //zakończ tylko wtedy jeśli przyjdzie Ctrl + C        
-        if sig == os.Interrupt {
-            
-            logs.Std.WriteStringLn("Przyszedł sygnał ctrl + c - wyłączam proxy")
-            close(signalInterrupt)
-            
-        } else {
-            
-            logs.Std.WriteStringLn("Przyszedł nieznany sygnał - ignoruję")
-        }
-    }
+    <- signalInterrupt
     
     logs.Std.WriteStringLn("wyłączam proxy z kodem wyjścia 0")
     
