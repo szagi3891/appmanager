@@ -80,12 +80,30 @@ func run() int {
     //stare pliki z logami będą kasowane automatycznie żeby nie zapchać dysku
     
     
-                //TODO - ten sposób proxowania trzeba będzie zaimplementować
-    //sposób na fajne proxowanie http
-    //http://siberianlaika.ru/node/29/
     
-    //wypaśnie o serwerach http ...
-    //http://jan.newmarch.name/go/http/chapter-http.html
+    //bardzo fajnie zrobiony elegancki stop
+    //http://rcrowley.org/articles/golang-graceful-stop.html
+    
+    //https://www.youtube.com/watch?v=InG72scKPd4
+    //debuger w go napisany do go
+    
+    
+                //łapać jeszcze jedno zdarzenie
+    /*
+        // Handle SIGINT and SIGTERM.
+        ch := make(chan os.Signal)
+        signal.Notify(ch, syscall.SIGINT, syscall.SIGTERM)
+        log.Println(<-ch)
+        
+        kill -l - wyświetla dopuszczalne nazwy sygnałów
+        kill -kill 1234 - wysłanie sygnału SIGKILL do procesu z pid=1234
+        kill -9 1234 - to samo wyżej, bo SIGKILL ma nr 9
+        kill -int 1234 - wysłanie sygnału SIGINT do procesu z pid=1234
+        kill -2 1234 - to samo wyżej, bo SIGINT ma nr 2
+        
+        //sposób na fajne proxowanie http
+        //http://siberianlaika.ru/node/29/
+    */
     
     
                         //start panelu do zarządzania konfiguracją proxy

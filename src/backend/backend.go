@@ -64,7 +64,7 @@ func (self *Backend) Name() string {
 func (self *Backend) Stop() {
     
     errKill := self.cmd.Process.Kill()
-
+    
     
     //syscall.Kill(self.process.Pid, syscall.SIGINT)
     

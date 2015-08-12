@@ -9,6 +9,7 @@ import (
     logrotorModule "../logrotor"
     "fmt"
     "sort"
+    "strconv"
     backendModule "../backend"
     layoutModule   "./layout"
     actionIndex    "./index"
@@ -18,7 +19,9 @@ import (
 
 func Start(port int64, logs *logrotorModule.Logs, manager *backendModule.Manager) (func(), *errorStack.Error) {
     
-    return httpserver.Start(port, func(out http.ResponseWriter, req *http.Request){
+    addr := ":" + strconv.FormatInt(port, 10)
+    
+    return httpserver.Start(addr, func(out http.ResponseWriter, req *http.Request){
         
         //fmt.Fprint(out, resp.content)
         
