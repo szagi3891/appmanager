@@ -81,13 +81,6 @@ func (self *Backend) Stop() {
 }
 
 
-func (self *Backend) Active() int {
-    
-    //TODO - trzeba jakoś czytać informację o ilości aktywnych połączeń do tego backendu
-    return 0
-}
-
-
 func (self *Backend) Port() int {
     return self.port
 }

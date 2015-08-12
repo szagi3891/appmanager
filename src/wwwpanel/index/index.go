@@ -28,7 +28,6 @@ func GetResponse(req *http.Request, appInfo *[]*backend.AppInfo, mainPort, activ
     
     tableHeader.Tag("td").Text("Nazwa builda")
     tableHeader.Tag("td").Text("Port")
-    tableHeader.Tag("td").Text("Aktywnych połączeń")
     tableHeader.Tag("td").Text("-")
     tableHeader.Tag("td").Text("-")
     
@@ -41,7 +40,6 @@ func GetResponse(req *http.Request, appInfo *[]*backend.AppInfo, mainPort, activ
         firstCeill.Text(appItem.Name)
         
         line.Tag("td").Text(strconv.FormatInt(int64(appItem.Port), 10))
-        line.Tag("td").Text(strconv.FormatInt(int64(appItem.Active), 10))
         
         if activePort == appItem.Port {
             firstCeill.Attr("style", "color:red")
@@ -58,7 +56,7 @@ func GetResponse(req *http.Request, appInfo *[]*backend.AppInfo, mainPort, activ
         
         tdDown := line.Tag("td")
         
-        if appItem.Port == activePort || appItem.Active > 0 {
+        if appItem.Port == activePort {
             tdDown.Html("&nbsp;")
         } else {
             link := "/down/" + appItem.Name + "/" + strconv.FormatInt(int64(appItem.Port), 10)

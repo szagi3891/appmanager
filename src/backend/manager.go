@@ -296,7 +296,6 @@ func (self *Manager) IsAvailableNewCommit(listBuild *[]string, lastCommitRepo st
 type AppInfo struct {
     Port    int
     Name    string
-    Active  int
 }
 
 func (self *Manager) GetAppList() *[]*AppInfo {
@@ -315,7 +314,6 @@ func (self *Manager) GetAppList() *[]*AppInfo {
             preOut[fullName] = &AppInfo{
                 Port : back.Port(),
                 Name : back.Name(),
-                Active : back.Active(),
             }
         }
     }
