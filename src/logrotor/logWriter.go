@@ -1,17 +1,12 @@
 package logrotor
 
-import (
-    "os"
-    "../errorStack"
-    "../applog"
-)
 
-func newLogWriter(pathFile string) *logWriter {
+func newLogWriter(pathFile string, ext string) *logWriter {
     
     pipe    := make(chan *[]byte)
     isClose := make(chan bool)
     
-    go runLogGroup(pipe, isClose, pathFile)
+    go runLogGroup(pipe, isClose, pathFile, ext)
     
     return &logWriter{
         pipe    : pipe,
@@ -73,7 +68,7 @@ func (self *logWriter) Stop() {
     II stopień - otrzymaną paczkę od razu zapisujemy do pliku
 */
 
-func runLogGroup(pipe chan *[]byte, isClose chan bool, pathFile string) {
+func runLogGroup(pipe chan *[]byte, isClose chan bool, pathFile string, ext string) {
     
     buf           := []*[]byte{}
     size          := 0
@@ -82,7 +77,7 @@ func runLogGroup(pipe chan *[]byte, isClose chan bool, pathFile string) {
     isCloseWriter := make(chan bool)
     
     
-    go SaveData(pathFile, sendToFile, isCloseWriter)
+    go SaveData(pathFile, sendToFile, isCloseWriter, ext)
     
     
     reciveData := func(newData *[]byte) bool {
@@ -136,24 +131,11 @@ func runLogGroup(pipe chan *[]byte, isClose chan bool, pathFile string) {
     }
 }
 
-func openFile(pathFile string) *os.File {
-    
-    fileNew, errCreate := os.OpenFile(pathFile, os.O_APPEND | os.O_CREATE | os.O_WRONLY, 0600)
 
-    if errCreate != nil {
-
-        applog.WriteErrLn(errorStack.From(errCreate).String())
-        return nil
-    }
+func SaveData(pathFile string, saveIn chan []*[]byte, isCloseWriter chan bool, ext string) {
     
-    return fileNew
-}
-
-
-func SaveData(pathFile string, saveIn chan []*[]byte, isCloseWriter chan bool) {
     
-    var file *os.File
-    
+    file := createFile(pathFile, ext)
     
     for {
         
@@ -162,10 +144,7 @@ func SaveData(pathFile string, saveIn chan []*[]byte, isCloseWriter chan bool) {
         
         if newData == nil {
             
-            if file != nil {
-                file.Close()
-            }
-            
+            file.close()
             close(isCloseWriter)
             
             return
@@ -173,49 +152,12 @@ func SaveData(pathFile string, saveIn chan []*[]byte, isCloseWriter chan bool) {
         
         
         for _, chankData := range newData {
-            
-            
-            if file == nil {
-                
-                fileNew := openFile(pathFile)
-                
-                if fileNew == nil {
-                    return
-                }
-                
-                file = fileNew
-            }
-            
-            
-            n, err := file.Write(*chankData)
-            
-            if err != nil {
-                
-                applog.WriteErrLn(errorStack.From(err).String())
-                continue
-            }
-            
-            if n != len(*chankData) {
-                
-                applog.WriteErrLn(errorStack.Create("nieprawidłowa ilość zapisanych znaków do pliku").String())
-            }
+            file.write(chankData)
         }
         
-        
-
-        //jeśli rotowanie
-
-            //tak ->
+        //jeśli przekroczono rozmiar,
             //zamknij plik
-            //zgzipuj nową zawartość
-            //usuń poprzednią wersję
-            //otwórz nowy dyskryptor
-            //zgłóś gotowość że zadanie wykonane
-            //saveResult <- true
-
-            //nie ->
-            //zgłość gotowość że zadanie wykonane
-            //saveResult <- true
+            //utwórz nowy
     }
 }
 
@@ -225,4 +167,3 @@ func SaveData(pathFile string, saveIn chan []*[]byte, isCloseWriter chan bool) {
     //timestart int           //czas w którym trafił pierwszy log do tego strumienia
     //size      int           //rozmiar danych które siedzą w tym pliku
 //}
-

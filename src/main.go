@@ -71,7 +71,7 @@ func run() int {
     defer managerBackend.Stop()
     
     
-    //TODO - zrobić rotowanie i gzipowanie logów
+    //TODO - zrobić rotowanie logów - obsługa flag określających rozmiar pojedyńczego pliku z logiem
     
     //TODO - trzeba pozbyć się logowania poprzez fmt
     
@@ -79,9 +79,6 @@ func run() int {
     //stare pliki z logami będą kasowane automatycznie żeby nie zapchać dysku
     
     
-    
-    //bardzo fajnie zrobiony elegancki stop
-    //http://rcrowley.org/articles/golang-graceful-stop.html
     
     //https://www.youtube.com/watch?v=InG72scKPd4
     //debuger w go napisany do go

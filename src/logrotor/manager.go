@@ -2,7 +2,6 @@ package logrotor
 
 import (
     "../errorStack"
-    "../utils"
     configModule "../config"
 )
 
@@ -56,5 +55,5 @@ func (self *Manager) newSingleLog(name string, stdout bool) *logWriter {
     }
         //., config.GetRotatesize(), config.GetRotatetime())    logDir
     
-    return newLogWriter(self.config.GetLogDir() + "/" + name + "_" + utils.GetCurrentTimeName() + "." + ext)
+    return newLogWriter(self.config.GetLogDir() + "/" + name, ext)
 }
