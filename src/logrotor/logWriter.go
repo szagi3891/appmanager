@@ -2,7 +2,6 @@ package logrotor
 
 import (
     configModule "../config"
-    "../applog"
 )
 
 func newLogWriter(name string, ext string, config *configModule.File) *logWriter {

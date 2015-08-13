@@ -5,7 +5,6 @@ import (
     //"os"
     "os/exec"
     "strconv"
-    "fmt"
     "syscall"
     "net"
     "time"
@@ -85,7 +84,7 @@ func (self *Backend) Name() string {
     return self.name
 }
 
-func (self *Backend) Stop() {
+func (self *Backend) Stop() *errorStack.Error {
     
     errKill := self.cmd.Process.Kill()
     
@@ -94,7 +93,7 @@ func (self *Backend) Stop() {
     
     
     if errKill != nil {
-        fmt.Println(errKill)
+        return errorStack.From(errKill)
     }
     
                         //czekaj aż się zakończy ten proces
@@ -102,6 +101,7 @@ func (self *Backend) Stop() {
     
     self.logs.Stop()
     
+    return nil
 }
 
 

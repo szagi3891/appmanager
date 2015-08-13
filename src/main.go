@@ -4,11 +4,11 @@ package main
 import (
     "os"
     "os/signal"
-    "fmt"
     backendModule "./backend"
     configModule "./config"
     logrotorModule "./logrotor"
     "./wwwpanel"
+    "./applog"
 )
 
 
@@ -21,10 +21,8 @@ func main(){
 
 func run() int {
     
-    fmt.Println("DEBUG: start app")
-    
     if len(os.Args) != 2 {
-        fmt.Println("Spodziewano się dokładnie dwóch parametrów")
+        applog.WriteErrLn("Spodziewano się dokładnie dwóch parametrów")
         return 1
     }
     
@@ -32,8 +30,7 @@ func run() int {
     config, errParse := configModule.Parse(os.Args[1])
     
     if errParse != nil {
-        
-        fmt.Println(errParse)
+        applog.WriteErrLn(errParse.String())
         return 1
     }
     
@@ -42,7 +39,7 @@ func run() int {
     
     if errLogrotor != nil {
         
-        fmt.Println(errLogrotor)
+        applog.WriteErrLn(errLogrotor.String())
         return 1
     }
     
@@ -58,14 +55,12 @@ func run() int {
     
     if errInitManager != nil {
         
-        fmt.Println(errInitManager)
+        applog.WriteErrLn(errInitManager.String())
         return 1
     }
     
     defer managerBackend.Stop()
     
-    
-    //TODO - trzeba pozbyć się logowania poprzez fmt
     
     //zrobić obsługę zmiennej : rotatetotalsize
     //stare pliki z logami będą kasowane automatycznie żeby nie zapchać dysku
@@ -102,7 +97,7 @@ func run() int {
     closePanel, errStartPanel := wwwpanel.Start(8889, logs, managerBackend)
     
     if errStartPanel != nil {
-        fmt.Println(errStartPanel)
+        applog.WriteErrLn(errStartPanel.String())
         return 1
     }
     
