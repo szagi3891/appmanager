@@ -62,9 +62,13 @@ func run() int {
     defer managerBackend.Stop()
     
     
+    //TODO
     //zrobić obsługę zmiennej : rotatetotalsize
     //stare pliki z logami będą kasowane automatycznie żeby nie zapchać dysku
     
+    //TODO
+    //zdarzyło się tak że przy wyłącznaiu programu, nie zdążył się skompresować główny log
+    //obserwować
     
     /*
         //https://www.youtube.com/watch?v=InG72scKPd4
