@@ -53,7 +53,6 @@ func (self *Manager) newSingleLog(name string, stdout bool) *logWriter {
     if stdout {
         ext = "out"
     }
-        //., config.GetRotatesize(), config.GetRotatetime())    logDir
     
-    return newLogWriter(self.config.GetLogDir() + "/" + name, ext)
+    return newLogWriter(name, ext, self.config)
 }

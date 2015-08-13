@@ -38,12 +38,6 @@ func run() int {
     }
     
     
-    
-    //listowanie wszystkich aplikacji słuchających na porcie
-    //netstat -tulpn
-    //lsof -i - coś podobnego
-    
-    
     logrotor, errLogrotor := logrotorModule.Init(config)
     
     if errLogrotor != nil {
@@ -71,21 +65,23 @@ func run() int {
     defer managerBackend.Stop()
     
     
-    //TODO - zrobić rotowanie logów - obsługa flag określających rozmiar pojedyńczego pliku z logiem
-    
     //TODO - trzeba pozbyć się logowania poprzez fmt
     
     //zrobić obsługę zmiennej : rotatetotalsize
     //stare pliki z logami będą kasowane automatycznie żeby nie zapchać dysku
     
     
-    
-    //https://www.youtube.com/watch?v=InG72scKPd4
-    //debuger w go napisany do go
-    
+    /*
+        //https://www.youtube.com/watch?v=InG72scKPd4
+        //debuger w go napisany do go
+
+
+        //listowanie wszystkich aplikacji słuchających na porcie
+        //netstat -tulpn
+        //lsof -i - coś podobnego
+        
     
                 //łapać jeszcze jedno zdarzenie
-    /*
         // Handle SIGINT and SIGTERM.
         ch := make(chan os.Signal)
         signal.Notify(ch, syscall.SIGINT, syscall.SIGTERM)

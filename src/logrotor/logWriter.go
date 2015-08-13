@@ -1,12 +1,16 @@
 package logrotor
 
+import (
+    configModule "../config"
+    "../applog"
+)
 
-func newLogWriter(pathFile string, ext string) *logWriter {
+func newLogWriter(name string, ext string, config *configModule.File) *logWriter {
     
     pipe    := make(chan *[]byte)
     isClose := make(chan bool)
     
-    go runLogGroup(pipe, isClose, pathFile, ext)
+    go runLogGroup(pipe, isClose, name, ext, config)
     
     return &logWriter{
         pipe    : pipe,
@@ -68,7 +72,7 @@ func (self *logWriter) Stop() {
     II stopień - otrzymaną paczkę od razu zapisujemy do pliku
 */
 
-func runLogGroup(pipe chan *[]byte, isClose chan bool, pathFile string, ext string) {
+func runLogGroup(pipe chan *[]byte, isClose chan bool, name string, ext string, config *configModule.File) {
     
     buf           := []*[]byte{}
     size          := 0
@@ -77,7 +81,7 @@ func runLogGroup(pipe chan *[]byte, isClose chan bool, pathFile string, ext stri
     isCloseWriter := make(chan bool)
     
     
-    go SaveData(pathFile, sendToFile, isCloseWriter, ext)
+    go SaveData(name, sendToFile, isCloseWriter, ext, config)
     
     
     reciveData := func(newData *[]byte) bool {
@@ -102,10 +106,10 @@ func runLogGroup(pipe chan *[]byte, isClose chan bool, pathFile string, ext stri
     
     for {
         
-        if size > 5000 {
+        if size > 16 * 2<<10 {
             
             select {
-
+                
                 case newData := <- pipe : {
                     
                     if reciveData(newData) {
@@ -132,10 +136,10 @@ func runLogGroup(pipe chan *[]byte, isClose chan bool, pathFile string, ext stri
 }
 
 
-func SaveData(pathFile string, saveIn chan []*[]byte, isCloseWriter chan bool, ext string) {
+func SaveData(name string, saveIn chan []*[]byte, isCloseWriter chan bool, ext string, config *configModule.File) {
     
     
-    file := createFile(pathFile, ext)
+    file := CreateFile(config.GetLogDir() + "/" + name, ext)
     
     for {
         
@@ -144,7 +148,7 @@ func SaveData(pathFile string, saveIn chan []*[]byte, isCloseWriter chan bool, e
         
         if newData == nil {
             
-            file.close()
+            file.Close()
             close(isCloseWriter)
             
             return
@@ -152,12 +156,17 @@ func SaveData(pathFile string, saveIn chan []*[]byte, isCloseWriter chan bool, e
         
         
         for _, chankData := range newData {
-            file.write(chankData)
+            file.Write(chankData)
         }
         
-        //jeśli przekroczono rozmiar,
-            //zamknij plik
-            //utwórz nowy
+        
+                                        //rotuj plik
+        
+        if file.Size() > config.GetRotatesize() || file.GetTimeExist() > config.GetRotatetime() {
+            
+            file.Close()
+            file = CreateFile(config.GetLogDir() + "/" + name, ext)   
+        }
     }
 }
 

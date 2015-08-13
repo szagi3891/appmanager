@@ -3,6 +3,7 @@ package logrotor
 import (
     "os"
     "io"
+    "time"
     "compress/gzip"
     "../utils"
     "../errorStack"
@@ -10,22 +11,31 @@ import (
 )
 
 
-type fileLog struct {
+type FileLog struct {
+    size     int
     filePath string
     file     *os.File
     isClose  bool
+    create   time.Time
 }
 
-func createFile(path, ext string) *fileLog {
+func CreateFile(path, ext string) *FileLog {
     
-    return &fileLog {
+    return &FileLog {
+        size     : 0,
         filePath : path + "_" + utils.GetCurrentTimeName() + "." + ext,
         file     : nil,
         isClose  : false,
+        create   : time.Now(),
     }
 }
 
-func (self *fileLog) write(chankData *[]byte) {
+func (self *FileLog) GetTimeExist() int {
+    
+    return int(time.Now().Sub(self.create) / time.Second)       //wynik w sekundach
+}
+
+func (self *FileLog) Write(chankData *[]byte) {
     
     //jeśli dyskryptor nie otworzony to dopiero teraz go otwórz
     
@@ -40,7 +50,7 @@ func (self *fileLog) write(chankData *[]byte) {
         self.file = fileNew
     }
     
-    n, err := self.file.Write(*chankData)
+    bytesWrite, err := self.file.Write(*chankData)
     
     if err != nil {
         
@@ -48,12 +58,14 @@ func (self *fileLog) write(chankData *[]byte) {
         return
     }
     
-    if n != len(*chankData) {
+    self.size = self.size + bytesWrite
+    
+    if bytesWrite != len(*chankData) {
         applog.WriteErrLn(errorStack.Create("nieprawidłowa ilość zapisanych znaków do pliku").String())
     }
 }
 
-func (self *fileLog) close() {
+func (self *FileLog) Close() {
     
     if self.file != nil {
         
@@ -80,6 +92,11 @@ func (self *fileLog) close() {
             }
         }
     }
+}
+
+
+func (self *FileLog) Size() int {
+    return self.size
 }
 
 
