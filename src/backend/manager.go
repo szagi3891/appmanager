@@ -54,7 +54,11 @@ func Init(config *configModule.File, logrotor *logrotorModule.Manager, logs *log
     manager.backend = backend
     
     
-    handleNginex.Switch(manager.backend.Port(), config.GetConfTpl(), config.GetConfDest(), config.GetConfRun())
+    errSwitch := handleNginex.Switch(manager.backend.Port(), config.GetConfTpl(), config.GetConfDest(), config.GetConfRun())
+    
+    if errSwitch != nil {
+        return nil, errSwitch
+    }
     
     /*
     addr := "127.0.0.1:" + strconv.FormatInt(int64(config.GetPortMain()), 10)
